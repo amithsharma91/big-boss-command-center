@@ -1,14 +1,24 @@
 import { useMemo, useState } from 'react';
+import { AuthProvider, useAuth } from './auth/AuthContext';
+import type { Permission } from './auth/rbac';
+import { can as canFor } from './auth/rbac';
 import { useHouse } from './store';
 import { Header } from './components/ui';
 import { BroadcastBar } from './components/broadcast';
+import { CurrentUserSwitcher, DeniedBanner } from './components/session';
+import { RoleMatrix, UserManagement, AuditLog } from './components/access';
 import { Leaderboard, ContestantGrid, HouseStats } from './components/contestants';
 import { TaskManager, TaskTimer } from './components/tasks';
 import { TeamManager, TeamStandings, TeamFilter } from './components/teams';
 import { CommandPanel, DangerZone, AnnouncementBar, EventFeed } from './components/house';
 
-export default function App() {
-  const house = useHouse();
+function Shell() {
+  const auth = useAuth();
+  const house = useHouse({
+    authorize: (perm: Permission) => canFor(auth.currentUser, perm),
+    ownContestantId: auth.currentUser.contestantId ?? null,
+    onDenied: (perm, action) => auth.deny(perm, action),
+  });
   const [teamFilter, setTeamFilter] = useState<string>('ALL');
 
   const nominees = useMemo(
@@ -24,15 +34,30 @@ export default function App() {
     return house.contestants.filter((c) => c.teamId === teamFilter);
   }, [house.contestants, teamFilter]);
 
+  const canManageTasks = auth.can('tasks.manage');
+  const canUpdateOwn = auth.can('own-task.update');
+  const ownContestantId = auth.currentUser.contestantId ?? null;
+
   return (
     <div className="min-h-screen bg-[#09090B] text-[#FAFAFA]">
-      <Header onReset={house.resetAll} activeCount={house.stats.active} />
+      <Header
+        onReset={house.resetAll}
+        activeCount={house.stats.active}
+        canReset={auth.can('users.manage')}
+      />
 
       <main className="mx-auto max-w-[1440px] space-y-4 p-3 md:p-5">
-        <BroadcastBar
-          announcement={house.announcements[0] ?? null}
-          count={house.announcements.length}
-        />
+        <section aria-label="Session" className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+          <div className="lg:col-span-2">
+            <CurrentUserSwitcher />
+          </div>
+          <div className="lg:col-span-3">
+            <BroadcastBar
+              announcement={house.announcements[0] ?? null}
+              count={house.announcements.length}
+            />
+          </div>
+        </section>
 
         <section aria-label="Top statistics">
           <HouseStats stats={house.stats} captainName={captainName} />
@@ -67,6 +92,8 @@ export default function App() {
               onDeleteTeam={house.deleteTeam}
               onMoveMember={house.moveMember}
               onAddContestant={(name, teamId, points) => house.addContestant(name, teamId, points) !== null}
+              canManage={auth.can('teams.manage')}
+              canAddContestant={auth.can('contestants.manage')}
             />
           </div>
           <div className="lg:col-span-2">
@@ -103,10 +130,13 @@ export default function App() {
               onUpdate={house.updateTask}
               onDelete={house.deleteTask}
               onAward={house.awardTaskReward}
+              canManage={canManageTasks}
+              ownContestantId={ownContestantId}
+              canUpdateOwn={canUpdateOwn}
             />
           </div>
           <div className="lg:col-span-2">
-            <TaskTimer />
+            <TaskTimer canManage={auth.can('timer.manage')} />
           </div>
         </section>
 
@@ -128,10 +158,32 @@ export default function App() {
           <AnnouncementBar announcements={house.announcements} onAnnounce={house.makeAnnouncement} />
         </section>
 
+        <section aria-label="Access control" id="access" className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+          <div className="lg:col-span-3">
+            <RoleMatrix />
+          </div>
+          <div className="lg:col-span-2">
+            <UserManagement />
+          </div>
+        </section>
+
+        <section aria-label="Access audit">
+          <AuditLog audit={auth.audit} />
+        </section>
+
         <footer className="pb-4 pt-2 text-center text-[11px] tracking-widest text-[#A1A1AA]">
-          BIG BOSS COMMAND CENTER • ROUND 01 • STATE PERSISTED LOCALLY
+          BIG BOSS COMMAND CENTER • ROUND 01 • STATE PERSISTED LOCALLY (bigboss-v1 + bigboss-rbac-v1)
         </footer>
       </main>
+      <DeniedBanner />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <Shell />
+    </AuthProvider>
   );
 }

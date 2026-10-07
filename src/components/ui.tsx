@@ -119,8 +119,8 @@ export function ActionButton(props: {
   );
 }
 
-export function Header(props: { onReset: () => void; activeCount: number }) {
-  const { onReset, activeCount } = props;
+export function Header(props: { onReset: () => void; activeCount: number; canReset?: boolean }) {
+  const { onReset, activeCount, canReset = true } = props;
 
   function handleReset() {
     if (window.confirm('Reset the house? This will clear all game state.')) {
@@ -154,6 +154,7 @@ export function Header(props: { onReset: () => void; activeCount: number }) {
             <a className="transition hover:text-[#FAFAFA]" href="#task-timer">TIMER</a>
             <a className="transition hover:text-[#FAFAFA]" href="#danger-zone">DANGER ZONE</a>
             <a className="transition hover:text-[#FAFAFA]" href="#announcement">ANNOUNCE</a>
+            <a className="transition hover:text-[#FAFAFA]" href="#access">ACCESS</a>
             <a className="transition hover:text-[#FAFAFA]" href="#events">ACTIVITY</a>
           </nav>
           <span className="flex items-center gap-2">
@@ -163,7 +164,7 @@ export function Header(props: { onReset: () => void; activeCount: number }) {
           <span className="text-xs text-[#A1A1AA]">
             <span className="font-bold text-[#FAFAFA]">{activeCount}</span> active
           </span>
-          <ActionButton kind="ghost" onClick={handleReset} title="Reset all house state">
+          <ActionButton kind="ghost" onClick={handleReset} disabled={!canReset} title={canReset ? 'Reset all house state' : 'Requires users.manage'}>
             RESET HOUSE
           </ActionButton>
         </div>

@@ -23,8 +23,13 @@ export function TaskManager(props: {
   onUpdate(id: string, patch: { title?: string; description?: string; reward?: number }): boolean;
   onDelete(id: string): void;
   onAward(id: string): void;
+  canManage: boolean;
+  ownContestantId: string | null;
+  canUpdateOwn: boolean;
 }) {
-  const { tasks, contestants, onAssign, onToggle, onCreate, onUpdate, onDelete, onAward } = props;
+  const { tasks, contestants, onAssign, onToggle, onCreate, onUpdate, onDelete, onAward, canManage, ownContestantId, canUpdateOwn } = props;
+  const canFlip = (task: Task): boolean =>
+    canManage || (canUpdateOwn && ownContestantId !== null && task.assignedTo === ownContestantId);
   const [filter, setFilter] = useState<Filter>('ALL');
 
   const [title, setTitle] = useState('');
@@ -118,6 +123,12 @@ export function TaskManager(props: {
 
   return (
     <Card title="TASK MANAGEMENT" subtitle="Create • Assign • Complete • Reward" id="tasks">
+      {!canManage ? (
+        <p className="mb-3 rounded-lg border border-[#27272A] bg-white/[0.02] px-3 py-2 text-xs text-[#A1A1AA]">
+          Task creation locked — requires tasks.manage. Contestants can only update their own assigned tasks.
+        </p>
+      ) : null}
+      {canManage ? (
       <form onSubmit={handleCreate} className="mb-3 grid gap-2 sm:grid-cols-2">
         <div className="flex flex-col gap-1">
           <label className={labelClass} htmlFor="task-name">Task Name</label>
@@ -173,6 +184,7 @@ export function TaskManager(props: {
           )}
         </div>
       </form>
+      ) : null}
 
       <div className="mb-2 flex flex-wrap gap-2" role="tablist" aria-label="Filter tasks">
         {filters.map((f) => (
@@ -218,6 +230,8 @@ export function TaskManager(props: {
                 <select
                   className={inputClass}
                   value={task.assignedTo ?? ''}
+                  disabled={!canManage}
+                  title={canManage ? undefined : 'Requires tasks.manage'}
                   onChange={(e) => onAssign(task.id, e.target.value || null)}
                   aria-label={`Assign ${task.title}`}
                 >
@@ -231,20 +245,32 @@ export function TaskManager(props: {
               </label>
               <ActionButton
                 kind={task.completed ? 'ghost' : 'primary'}
+                disabled={!canFlip(task)}
+                title={canFlip(task) ? undefined : 'Requires tasks.manage or own-task assignment'}
                 onClick={() => onToggle(task.id)}
               >
                 {task.completed ? 'REOPEN' : 'COMPLETE'}
               </ActionButton>
-              {showAward && (
+              {showAward && canManage && (
                 <ActionButton kind="green" onClick={() => onAward(task.id)}>
                   AWARD +{task.reward}
                 </ActionButton>
               )}
-              <ActionButton kind="ghost" onClick={() => (isEditing ? setEditingId(null) : startEdit(task))}>
+              {showAward && !canManage && (
+                <span className="text-[11px] text-[#A1A1AA]" title="Requires tasks.manage">🔒 reward locked</span>
+              )}
+              <ActionButton
+                kind="ghost"
+                disabled={!canManage}
+                title={canManage ? undefined : 'Requires tasks.manage'}
+                onClick={() => (isEditing ? setEditingId(null) : startEdit(task))}
+              >
                 {isEditing ? 'CANCEL' : 'EDIT'}
               </ActionButton>
               <ActionButton
                 kind="danger"
+                disabled={!canManage}
+                title={canManage ? undefined : 'Requires tasks.manage'}
                 onClick={() => {
                   if (window.confirm(`Delete task "${task.title}"?`)) {
                     onDelete(task.id);
@@ -321,7 +347,8 @@ export function TaskManager(props: {
   );
 }
 
-export function TaskTimer() {
+export function TaskTimer(props: { canManage: boolean }) {
+  const { canManage } = props;
   const [totalSecs, setTotalSecs] = useState(900);
   const [remaining, setRemaining] = useState(900);
   const [running, setRunning] = useState(false);
@@ -388,6 +415,11 @@ export function TaskTimer() {
 
   return (
     <Card title="TASK TIMER" subtitle="Countdown • START / PAUSE / RESET" id="task-timer">
+      {!canManage ? (
+        <p className="mb-3 rounded-lg border border-[#27272A] bg-white/[0.02] px-3 py-2 text-center text-xs text-[#A1A1AA]">
+          Timer controls locked — requires timer.manage. Countdown is visible to all roles.
+        </p>
+      ) : null}
       <div className="flex flex-col items-center gap-3">
         <div
           className={
@@ -419,19 +451,20 @@ export function TaskTimer() {
             min={1}
             max={120}
             value={Math.round(totalSecs / 60)}
-            disabled={running}
+            disabled={running || !canManage}
+            title={canManage ? undefined : 'Requires timer.manage'}
             onChange={(e) => handleMinutes(Number(e.target.value))}
             className={`${inputClass} w-16 disabled:opacity-50`}
           />
         </div>
         <div className="flex flex-wrap items-center justify-center gap-2">
-          <ActionButton kind="primary" onClick={start} disabled={running}>
+          <ActionButton kind="primary" onClick={start} disabled={running || !canManage} title={canManage ? undefined : 'Requires timer.manage'}>
             START
           </ActionButton>
-          <ActionButton kind="ghost" onClick={pause} disabled={!running}>
+          <ActionButton kind="ghost" onClick={pause} disabled={!running || !canManage} title={canManage ? undefined : 'Requires timer.manage'}>
             PAUSE
           </ActionButton>
-          <ActionButton kind="danger" onClick={reset}>
+          <ActionButton kind="danger" onClick={reset} disabled={!canManage} title={canManage ? undefined : 'Requires timer.manage'}>
             RESET
           </ActionButton>
         </div>

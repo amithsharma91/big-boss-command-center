@@ -24,8 +24,10 @@ function TeamPanel(props: {
   onUpdateTeam(id: string, patch: { description?: string; color?: string }): void;
   onDeleteTeam(id: string): void;
   onMoveMember(contestantId: string, teamId: string | null): void;
+  canManage: boolean;
 }) {
-  const { team, teams, contestants, onRenameTeam, onUpdateTeam, onDeleteTeam, onMoveMember } = props;
+  const { team, teams, contestants, onRenameTeam, onUpdateTeam, onDeleteTeam, onMoveMember, canManage } = props;
+  const noPerm = 'Requires teams.manage';
 
   const members = contestants.filter((c) => c.teamId === team.id);
   const active = members.filter((c) => c.status !== 'EVICTED');
@@ -98,11 +100,11 @@ function TeamPanel(props: {
         </span>
         <span className="ml-auto flex gap-1.5">
           {renaming ? null : (
-            <ActionButton kind="ghost" onClick={() => { setRenameValue(team.name); setRenameError(''); setRenaming(true); }}>
+            <ActionButton kind="ghost" disabled={!canManage} title={canManage ? undefined : noPerm} onClick={() => { setRenameValue(team.name); setRenameError(''); setRenaming(true); }}>
               RENAME
             </ActionButton>
           )}
-          <ActionButton kind="danger" onClick={handleDelete}>
+          <ActionButton kind="danger" disabled={!canManage} title={canManage ? undefined : noPerm} onClick={handleDelete}>
             DELETE TEAM
           </ActionButton>
         </span>
@@ -155,7 +157,7 @@ function TeamPanel(props: {
             ))}
           </select>
         </div>
-        <ActionButton kind="ghost" onClick={() => onUpdateTeam(team.id, { description: descValue, color: colorValue })}>
+        <ActionButton kind="ghost" disabled={!canManage} title={canManage ? undefined : noPerm} onClick={() => onUpdateTeam(team.id, { description: descValue, color: colorValue })}>
           SAVE
         </ActionButton>
       </div>
@@ -174,7 +176,7 @@ function TeamPanel(props: {
                 <ActionButton
                   kind="ghost"
                   onClick={() => onMoveMember(m.id, null)}
-                  disabled={evicted}
+                  disabled={evicted || !canManage}
                   title={evicted ? 'Evicted members cannot be removed' : `Remove ${m.name} from ${team.name}`}
                 >
                   REMOVE
@@ -202,7 +204,7 @@ function TeamPanel(props: {
               </label>
             ))}
           </div>
-          <ActionButton kind="ghost" onClick={handleAddMembers} disabled={checked.length === 0}>
+          <ActionButton kind="ghost" onClick={handleAddMembers} disabled={checked.length === 0 || !canManage} title={canManage ? undefined : noPerm}>
             ADD TO TEAM
           </ActionButton>
         </div>
@@ -220,8 +222,10 @@ export function TeamManager(props: {
   onDeleteTeam(id: string): void;
   onMoveMember(contestantId: string, teamId: string | null): void;
   onAddContestant(name: string, teamId: string | null, points: number): boolean;
+  canManage: boolean;
+  canAddContestant: boolean;
 }) {
-  const { teams, contestants, onCreateTeam, onRenameTeam, onUpdateTeam, onDeleteTeam, onMoveMember, onAddContestant } = props;
+  const { teams, contestants, onCreateTeam, onRenameTeam, onUpdateTeam, onDeleteTeam, onMoveMember, onAddContestant, canManage, canAddContestant } = props;
 
   const [createName, setCreateName] = useState('');
   const [createDesc, setCreateDesc] = useState('');
@@ -272,6 +276,12 @@ export function TeamManager(props: {
 
   return (
     <Card title="TEAM MANAGEMENT" subtitle="Create • Rename • Staff • Disband" id="teams">
+      {!canManage ? (
+        <p className="mb-3 rounded-lg border border-[#27272A] bg-white/[0.02] px-3 py-2 text-xs text-[#A1A1AA]">
+          Team management locked — requires teams.manage. Standings and members below are read-only.
+        </p>
+      ) : null}
+      {canManage ? (
       <form onSubmit={handleCreate} className="space-y-2">
         <div className="grid gap-2 sm:grid-cols-3">
           <div>
@@ -313,6 +323,7 @@ export function TeamManager(props: {
         </ActionButton>
         {createError ? <p className="text-xs text-[#FB7185]">{createError}</p> : null}
       </form>
+      ) : null}
 
       <div className="mt-4 space-y-2">
         {teams.map((t) => (
@@ -325,6 +336,7 @@ export function TeamManager(props: {
             onUpdateTeam={onUpdateTeam}
             onDeleteTeam={onDeleteTeam}
             onMoveMember={onMoveMember}
+            canManage={canManage}
           />
         ))}
       </div>
@@ -332,6 +344,7 @@ export function TeamManager(props: {
         Disbanding a team never deletes members — they move to No Team.
       </p>
 
+      {canAddContestant ? (
       <form onSubmit={handleAddContestant} className="mt-4 space-y-2 border-t border-[#27272A] pt-3">
         <p className={labelCls}>Add contestant</p>
         <div className="grid gap-2 sm:grid-cols-3">
@@ -375,6 +388,11 @@ export function TeamManager(props: {
         </ActionButton>
         {ncError ? <p className="text-xs text-[#FB7185]">{ncError}</p> : null}
       </form>
+      ) : (
+        <p className="mt-4 rounded-lg border border-[#27272A] bg-white/[0.02] px-3 py-2 text-xs text-[#A1A1AA]">
+          Adding contestants locked — requires contestants.manage.
+        </p>
+      )}
     </Card>
   );
 }

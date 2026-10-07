@@ -1,6 +1,7 @@
 import type { Contestant, HouseStats, Team } from '../types';
 import type { ReactNode } from 'react';
 import { teamName, teamColor } from '../types';
+import { useAuth } from '../auth/AuthContext';
 import { Card, Badge, ActionButton, StatTile } from './ui';
 
 function isEvicted(c: Contestant): boolean {
@@ -101,6 +102,15 @@ export function ContestantGrid(props: ContestantGridProps) {
     onChangeCaptain,
     onEvict,
   } = props;
+  const { can } = useAuth();
+  const canPoints = can('points.manage');
+  const canNominatePerm = can('nominations.manage');
+  const canImmunity = can('immunity.manage');
+  const canCaptain = can('captain.manage');
+  const canEvict = can('eviction.manage');
+  const lockNote = (perm: string) => (
+    <p className="mt-1 text-[11px] text-[#A1A1AA]">🔒 Requires {perm}</p>
+  );
 
   return (
     <Card
@@ -160,7 +170,8 @@ export function ContestantGrid(props: ContestantGridProps) {
                     <ActionButton
                       kind="ghost"
                       className="px-2 py-1 text-xs"
-                      disabled={evicted}
+                      disabled={evicted || !canPoints}
+                      title={canPoints ? undefined : 'Requires points.manage'}
                       onClick={() => onAdd(c.id, 10)}
                     >
                       +10
@@ -168,7 +179,8 @@ export function ContestantGrid(props: ContestantGridProps) {
                     <ActionButton
                       kind="ghost"
                       className="px-2 py-1 text-xs"
-                      disabled={evicted}
+                      disabled={evicted || !canPoints}
+                      title={canPoints ? undefined : 'Requires points.manage'}
                       onClick={() => onAdd(c.id, 50)}
                     >
                       +50
@@ -176,7 +188,8 @@ export function ContestantGrid(props: ContestantGridProps) {
                     <ActionButton
                       kind="ghost"
                       className="px-2 py-1 text-xs"
-                      disabled={evicted}
+                      disabled={evicted || !canPoints}
+                      title={canPoints ? undefined : 'Requires points.manage'}
                       onClick={() => onSub(c.id, 10)}
                     >
                       -10
@@ -184,27 +197,40 @@ export function ContestantGrid(props: ContestantGridProps) {
                     <ActionButton
                       kind="ghost"
                       className="px-2 py-1 text-xs"
-                      disabled={evicted}
+                      disabled={evicted || !canPoints}
+                      title={canPoints ? undefined : 'Requires points.manage'}
                       onClick={() => onSub(c.id, 50)}
                     >
                       -50
                     </ActionButton>
                   </div>
+                  {!canPoints ? lockNote('points.manage') : null}
                 </div>
 
                 <div className="mt-2">
                   <div className="mb-1 text-[11px] font-semibold tracking-wide text-[#A1A1AA]">
                     NOMINATE
                   </div>
-                  {evicted ? null : nominated ? (
-                    <ActionButton
-                      kind="ghost"
-                      className="px-2 py-1 text-xs"
-                      disabled={evicted}
-                      onClick={() => onRemoveNomination(c.id)}
-                    >
-                      REMOVE NOMINATION
-                    </ActionButton>
+                  {evicted ? null : !canNominatePerm ? (
+                    <div>
+                      <ActionButton kind="ghost" className="px-2 py-1 text-xs" disabled title="Requires nominations.manage">
+                        NOMINATE 🔒
+                      </ActionButton>
+                      {lockNote('nominations.manage')}
+                    </div>
+                  ) : nominated ? (
+                    <div>
+                      <ActionButton
+                        kind="ghost"
+                        className="px-2 py-1 text-xs"
+                        disabled={evicted || !canNominatePerm}
+                        title={canNominatePerm ? undefined : 'Requires nominations.manage'}
+                        onClick={() => onRemoveNomination(c.id)}
+                      >
+                        REMOVE NOMINATION
+                      </ActionButton>
+                      {!canNominatePerm ? lockNote('nominations.manage') : null}
+                    </div>
                   ) : c.immune ? (
                     <div>
                       <ActionButton
@@ -221,7 +247,8 @@ export function ContestantGrid(props: ContestantGridProps) {
                     <ActionButton
                       kind="primary"
                       className="px-2 py-1 text-xs"
-                      disabled={evicted}
+                      disabled={evicted || !canNominatePerm}
+                      title={canNominatePerm ? undefined : 'Requires nominations.manage'}
                       onClick={() => onNominate(c.id)}
                     >
                       NOMINATE
@@ -237,7 +264,8 @@ export function ContestantGrid(props: ContestantGridProps) {
                     <ActionButton
                       kind="ghost"
                       className="px-2 py-1 text-xs"
-                      disabled={evicted}
+                      disabled={evicted || !canImmunity}
+                      title={canImmunity ? undefined : 'Requires immunity.manage'}
                       onClick={() => onRevokeImmunity(c.id)}
                     >
                       REVOKE IMMUNITY
@@ -246,12 +274,14 @@ export function ContestantGrid(props: ContestantGridProps) {
                     <ActionButton
                       kind="green"
                       className="px-2 py-1 text-xs"
-                      disabled={evicted}
+                      disabled={evicted || !canImmunity}
+                      title={canImmunity ? undefined : 'Requires immunity.manage'}
                       onClick={() => onGrantImmunity(c.id)}
                     >
                       GRANT IMMUNITY
                     </ActionButton>
                   )}
+                  {!canImmunity ? lockNote('immunity.manage') : null}
                 </div>
 
                 <div className="mt-2">
@@ -264,12 +294,14 @@ export function ContestantGrid(props: ContestantGridProps) {
                     <ActionButton
                       kind="gold"
                       className="px-2 py-1 text-xs"
-                      disabled={evicted}
+                      disabled={evicted || !canCaptain}
+                      title={canCaptain ? undefined : 'Requires captain.manage'}
                       onClick={() => onChangeCaptain(c.id)}
                     >
                       MAKE CAPTAIN
                     </ActionButton>
                   )}
+                  {!c.captain && !canCaptain ? lockNote('captain.manage') : null}
                 </div>
 
                 <div className="mt-2">
@@ -279,7 +311,8 @@ export function ContestantGrid(props: ContestantGridProps) {
                   <ActionButton
                     kind="danger"
                     className="px-2 py-1 text-xs"
-                    disabled={evicted}
+                    disabled={evicted || !canEvict}
+                    title={canEvict ? undefined : 'Requires eviction.manage'}
                     onClick={() => {
                       if (!window.confirm('Evict ' + c.name + '? This removes them from the leaderboard.')) return;
                       onEvict(c.id);
@@ -287,6 +320,7 @@ export function ContestantGrid(props: ContestantGridProps) {
                   >
                     EVICT
                   </ActionButton>
+                  {!canEvict ? lockNote('eviction.manage') : null}
                 </div>
               </div>
             );

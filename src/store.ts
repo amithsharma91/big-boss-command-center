@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Announcement, Contestant, EventLog, EventType, HouseStats, Task, Team } from './types';
+import type { Permission } from './auth/rbac';
 import { seedAnnouncements, seedContestants, seedEvents, seedTasks, seedTeams } from './seed';
 
 const STORAGE_KEY = 'bigboss-v1';
@@ -182,7 +183,28 @@ function loadInitial(): PersistedState {
   };
 }
 
-export function useHouse() {
+export interface HouseOptions {
+  /** Return false to deny. When omitted, all actions are allowed (legacy behavior). */
+  authorize?: (perm: Permission) => boolean;
+  /** Contestant id linked to the current demo user (for own-task rules). */
+  ownContestantId?: string | null;
+  /** Called whenever an authorized check denies an action. */
+  onDenied?: (perm: Permission, action: string) => void;
+}
+
+export function useHouse(opts?: HouseOptions) {
+  const authorize = opts?.authorize;
+  const ownContestantId = opts?.ownContestantId ?? null;
+  const onDenied = opts?.onDenied;
+
+  /** Central business-logic authorization gate. */
+  const allowed = (perm: Permission, action: string): boolean => {
+    if (authorize && !authorize(perm)) {
+      onDenied?.(perm, action);
+      return false;
+    }
+    return true;
+  };
   const [initial] = useState<PersistedState>(loadInitial);
   const [contestants, setContestants] = useState<Contestant[]>(initial.contestants);
   const [teams, setTeams] = useState<Team[]>(initial.teams);
@@ -207,6 +229,7 @@ export function useHouse() {
     if (!Number.isFinite(amount) || amount <= 0) return;
     const target = contestants.find((c) => c.id === id);
     if (!target || target.status === 'EVICTED') return;
+    if (!allowed('points.manage', `adjust points for ${target.name}`)) return;
     setContestants((prev) =>
       prev.map((c) => (c.id === id ? { ...c, points: Math.max(0, c.points + amount) } : c)),
     );
@@ -217,6 +240,7 @@ export function useHouse() {
     if (!Number.isFinite(amount) || amount <= 0) return;
     const target = contestants.find((c) => c.id === id);
     if (!target || target.status === 'EVICTED') return;
+    if (!allowed('points.manage', `adjust points for ${target.name}`)) return;
     setContestants((prev) =>
       prev.map((c) => (c.id === id ? { ...c, points: Math.max(0, c.points - amount) } : c)),
     );
@@ -228,6 +252,7 @@ export function useHouse() {
   const changeCaptain = (id: string): void => {
     const target = contestants.find((c) => c.id === id);
     if (!target || target.status === 'EVICTED') return;
+    if (!allowed('captain.manage', `make ${target.name} Captain`)) return;
     setContestants((prev) => prev.map((c) => ({ ...c, captain: c.id === id })));
     setEvents((prev) => pushTo(prev, 'captain', `${target.name} became Captain`));
   };
@@ -237,6 +262,7 @@ export function useHouse() {
   const grantImmunity = (id: string): void => {
     const target = contestants.find((c) => c.id === id);
     if (!target || target.status === 'EVICTED') return;
+    if (!allowed('immunity.manage', `change immunity for ${target.name}`)) return;
     setContestants((prev) =>
       prev.map((c) =>
         c.id === id
@@ -250,6 +276,7 @@ export function useHouse() {
   const revokeImmunity = (id: string): void => {
     const target = contestants.find((c) => c.id === id);
     if (!target || target.status === 'EVICTED') return;
+    if (!allowed('immunity.manage', `change immunity for ${target.name}`)) return;
     setContestants((prev) => prev.map((c) => (c.id === id ? { ...c, immune: false } : c)));
     setEvents((prev) => pushTo(prev, 'immunity', `${target.name} immunity revoked`));
   };
@@ -259,6 +286,7 @@ export function useHouse() {
   const nominate = (id: string): void => {
     const target = contestants.find((c) => c.id === id);
     if (!target) return;
+    if (!allowed('nominations.manage', `nominate ${target.name}`)) return;
     if (!canNominate(target).ok) return;
     setContestants((prev) => prev.map((c) => (c.id === id ? { ...c, status: 'NOMINATED' } : c)));
     setEvents((prev) => pushTo(prev, 'nominate', `${target.name} nominated`));
@@ -267,6 +295,7 @@ export function useHouse() {
   const removeNomination = (id: string): void => {
     const target = contestants.find((c) => c.id === id);
     if (!target || target.status !== 'NOMINATED') return;
+    if (!allowed('nominations.manage', `pardon ${target.name}`)) return;
     setContestants((prev) => prev.map((c) => (c.id === id ? { ...c, status: 'ACTIVE' } : c)));
     setEvents((prev) => pushTo(prev, 'nominate', `${target.name} nomination removed`));
   };
@@ -276,6 +305,7 @@ export function useHouse() {
   const evict = (id: string): void => {
     const target = contestants.find((c) => c.id === id);
     if (!target || target.status === 'EVICTED') return;
+    if (!allowed('eviction.manage', `evict ${target.name}`)) return;
     setContestants((prev) =>
       prev.map((c) =>
         c.id === id ? { ...c, status: 'EVICTED', captain: false, immune: false } : c,
@@ -295,6 +325,7 @@ export function useHouse() {
   const createTeam = (name: string, description: string, color: string): Team | null => {
     const clean = name.trim();
     if (!clean) return null;
+    if (!allowed('teams.manage', `create team "${clean}"`)) return null;
     if (teamNameInUse(clean)) return null;
     const team: Team = {
       id: slugTeam(clean) || makeId('team'),
@@ -315,6 +346,7 @@ export function useHouse() {
     if (!clean || teamNameInUse(clean, id)) return false;
     const target = teams.find((t) => t.id === id);
     if (!target) return false;
+    if (!allowed('teams.manage', `rename team "${target.name}"`)) return false;
     setTeams((prev) => prev.map((t) => (t.id === id ? { ...t, name: clean } : t)));
     setEvents((prev) => pushTo(prev, 'team', `Team "${target.name}" renamed to "${clean}"`));
     return true;
@@ -323,6 +355,7 @@ export function useHouse() {
   const updateTeam = (id: string, patch: { description?: string; color?: string }): void => {
     const target = teams.find((t) => t.id === id);
     if (!target) return;
+    if (!allowed('teams.manage', `update team "${target.name}"`)) return;
     setTeams((prev) =>
       prev.map((t) =>
         t.id === id
@@ -340,6 +373,7 @@ export function useHouse() {
   const deleteTeam = (id: string): void => {
     const target = teams.find((t) => t.id === id);
     if (!target) return;
+    if (!allowed('teams.manage', `disband team "${target.name}"`)) return;
     setTeams((prev) => prev.filter((t) => t.id !== id));
     setContestants((prev) => prev.map((c) => (c.teamId === id ? { ...c, teamId: null } : c)));
     setEvents((prev) => pushTo(prev, 'team', `Team "${target.name}" disbanded — members moved to No Team`));
@@ -348,6 +382,7 @@ export function useHouse() {
   const moveMember = (contestantId: string, teamId: string | null): void => {
     const target = contestants.find((c) => c.id === contestantId);
     if (!target || target.status === 'EVICTED') return;
+    if (!allowed('teams.manage', `move ${target.name} between teams`)) return;
     if (teamId !== null && !teams.some((t) => t.id === teamId)) return;
     if ((target.teamId ?? null) === teamId) return;
     const from = target.teamId ? teams.find((t) => t.id === target.teamId)?.name ?? 'No Team' : 'No Team';
@@ -360,6 +395,7 @@ export function useHouse() {
     const clean = name.trim();
     if (!clean) return null;
     if (contestants.some((c) => c.name.toLowerCase() === clean.toLowerCase())) return null;
+    if (!allowed('contestants.manage', `add contestant "${clean}"`)) return null;
     if (teamId !== null && !teams.some((t) => t.id === teamId)) return null;
     const safePoints = Number.isFinite(points) ? Math.max(0, Math.floor(points)) : 0;
     const base = clean.toLowerCase().replace(/[^a-z0-9]+/g, '');
@@ -389,6 +425,7 @@ export function useHouse() {
   ): Task | null => {
     const clean = title.trim();
     if (!clean) return null;
+    if (!allowed('tasks.manage', `create task "${clean}"`)) return null;
     if (assignedTo !== null) {
       const assignee = contestants.find((c) => c.id === assignedTo);
       if (!assignee || assignee.status === 'EVICTED') return null;
@@ -413,6 +450,7 @@ export function useHouse() {
   const updateTask = (id: string, patch: { title?: string; description?: string; reward?: number }): boolean => {
     const task = tasks.find((t) => t.id === id);
     if (!task) return false;
+    if (!allowed('tasks.manage', `edit task "${task.title}"`)) return false;
     if (patch.title !== undefined && !patch.title.trim()) return false;
     setTasks((prev) =>
       prev.map((t) =>
@@ -436,6 +474,7 @@ export function useHouse() {
   const deleteTask = (id: string): void => {
     const task = tasks.find((t) => t.id === id);
     if (!task) return;
+    if (!allowed('tasks.manage', `delete task "${task.title}"`)) return;
     setTasks((prev) => prev.filter((t) => t.id !== id));
     setEvents((prev) => pushTo(prev, 'task', `Task "${task.title}" deleted`));
   };
@@ -443,6 +482,7 @@ export function useHouse() {
   const assignTask = (taskId: string, contestantId: string | null): void => {
     const task = tasks.find((t) => t.id === taskId);
     if (!task) return;
+    if (!allowed('tasks.manage', `assign task "${task.title}"`)) return;
     if (contestantId !== null) {
       const assignee = contestants.find((c) => c.id === contestantId);
       if (!assignee || assignee.status === 'EVICTED') return;
@@ -466,6 +506,17 @@ export function useHouse() {
   const toggleTask = (taskId: string): void => {
     const task = tasks.find((t) => t.id === taskId);
     if (!task) return;
+    if (authorize && !authorize('tasks.manage')) {
+      // Contestants may only flip their OWN assigned tasks.
+      const own =
+        ownContestantId !== null &&
+        task.assignedTo === ownContestantId &&
+        authorize('own-task.update');
+      if (!own) {
+        onDenied?.('tasks.manage', `update task "${task.title}"`);
+        return;
+      }
+    }
     const next = !task.completed;
     setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, completed: next } : t)));
     setEvents((prev) =>
@@ -477,6 +528,7 @@ export function useHouse() {
   const awardTaskReward = (taskId: string): void => {
     const task = tasks.find((t) => t.id === taskId);
     if (!task || !task.completed || task.rewarded || task.reward <= 0) return;
+    if (!allowed('points.manage', `award reward for "${task.title}"`)) return;
     const assignee = task.assignedTo ? contestants.find((c) => c.id === task.assignedTo) : undefined;
     if (!assignee || assignee.status === 'EVICTED') return;
     setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, rewarded: true } : t)));
@@ -493,6 +545,7 @@ export function useHouse() {
   const makeAnnouncement = (text: string): void => {
     const trimmed = text.trim();
     if (!trimmed) return;
+    if (!allowed('announcements.manage', 'post announcement')) return;
     const announcement: Announcement = {
       id: makeId('a'),
       text: trimmed,
@@ -504,6 +557,7 @@ export function useHouse() {
   };
 
   const resetAll = (): void => {
+    if (!allowed('users.manage', 'reset house')) return;
     setContestants(seedContestants());
     setTeams(seedTeams());
     setTasks(seedTasks());

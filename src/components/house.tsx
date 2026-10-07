@@ -1,9 +1,20 @@
 import { useState } from 'react';
 import type { Announcement, Contestant, EventLog, Team } from '../types';
+import type { Permission } from '../auth/rbac';
+import { useAuth } from '../auth/AuthContext';
 import { teamName } from '../types';
 import { ActionButton, Badge, Card } from './ui';
 
 type CommandAction = 'add' | 'sub' | 'nominate' | 'immunity' | 'captain' | 'evict';
+
+const commandPerm: Record<CommandAction, Permission> = {
+  add: 'points.manage',
+  sub: 'points.manage',
+  nominate: 'nominations.manage',
+  immunity: 'immunity.manage',
+  captain: 'captain.manage',
+  evict: 'eviction.manage',
+};
 
 export function CommandPanel(props: {
   contestants: Contestant[];
@@ -16,6 +27,7 @@ export function CommandPanel(props: {
   onEvict(id: string): void;
 }) {
   const { contestants, teams, onAdd, onSub, onNominate, onGrantImmunity, onChangeCaptain, onEvict } = props;
+  const { can, deny } = useAuth();
   const active = contestants.filter((c) => c.status !== 'EVICTED');
   const [selectedId, setSelectedId] = useState('');
   const [action, setAction] = useState<CommandAction>('add');
@@ -36,6 +48,12 @@ export function CommandPanel(props: {
     }
     if (target.status === 'EVICTED') {
       setMessage(`${target.name} is evicted — action blocked`);
+      return;
+    }
+    const need = commandPerm[action];
+    if (!can(need)) {
+      deny(need, `command ${action} on ${target.name}`);
+      setMessage(`Blocked: your role lacks ${need}`);
       return;
     }
     switch (action) {
@@ -174,8 +192,15 @@ export function DangerZone(props: {
   onRemoveNomination(id: string): void;
 }) {
   const { nominees, teams, onEvict, onRemoveNomination } = props;
+  const { can, deny } = useAuth();
+  const canPardon = can('nominations.manage');
+  const canEvict = can('eviction.manage');
 
   function handleEvict(c: Contestant): void {
+    if (!canEvict) {
+      deny('eviction.manage', `evict ${c.name}`);
+      return;
+    }
     if (window.confirm(`Evict ${c.name} from the house?`)) {
       onEvict(c.id);
     }
@@ -205,11 +230,20 @@ export function DangerZone(props: {
               </div>
               <Badge tone="red">Nominated</Badge>
               <div className="flex flex-wrap items-center gap-1.5">
-                <ActionButton kind="ghost" onClick={() => onRemoveNomination(c.id)} title={`Remove nomination for ${c.name}`}>
+                <ActionButton
+                  kind="ghost"
+                  onClick={() => onRemoveNomination(c.id)}
+                  disabled={!canPardon}
+                  title={canPardon ? `Remove nomination for ${c.name}` : 'Requires nominations.manage'}
+                >
                   REMOVE NOMINATION
                 </ActionButton>
-                <ActionButton kind="danger" onClick={() => handleEvict(c)} title={`Evict ${c.name}`}>
-                  EVICT
+                <ActionButton
+                  kind="danger"
+                  onClick={() => handleEvict(c)}
+                  title={canEvict ? `Evict ${c.name}` : 'Requires eviction.manage — click to test denial'}
+                >
+                  {canEvict ? 'EVICT' : 'EVICT 🔒'}
                 </ActionButton>
               </div>
             </div>
@@ -225,6 +259,8 @@ export function AnnouncementBar(props: {
   onAnnounce(text: string): void;
 }) {
   const { announcements, onAnnounce } = props;
+  const { can } = useAuth();
+  const canPost = can('announcements.manage');
   const [text, setText] = useState('');
   const latest = announcements.length > 0 ? announcements[0] : null;
   const recent = announcements.slice(0, 3);
@@ -238,6 +274,12 @@ export function AnnouncementBar(props: {
 
   return (
     <Card title="BIG BOSS ANNOUNCEMENT" subtitle="Broadcast to the house" id="announcement">
+      {!canPost ? (
+        <p className="mb-3 rounded-lg border border-[#27272A] bg-white/[0.02] px-3 py-2 text-xs text-[#A1A1AA]">
+          Posting locked — requires announcements.manage. History below is read-only.
+        </p>
+      ) : null}
+      {canPost ? (
       <form onSubmit={handleSubmit} className="flex flex-col gap-2">
         <label htmlFor="announcement-input" className="text-[10px] font-bold uppercase tracking-widest text-[#A1A1AA]">
           Message to house
@@ -257,6 +299,7 @@ export function AnnouncementBar(props: {
           </ActionButton>
         </div>
       </form>
+      ) : null}
       <div className="mt-3">
         <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-[#A1A1AA]">
           Latest ({announcements.length})
@@ -298,6 +341,7 @@ const eventDot: Record<EventLog['type'], string> = {
   announce: 'bg-[#E11D48]',
   system: 'bg-[#A1A1AA]',
   team: 'bg-[#8B5CF6]',
+  auth: 'bg-[#D4AF37]',
 };
 
 export function EventFeed(props: { events: EventLog[] }) {

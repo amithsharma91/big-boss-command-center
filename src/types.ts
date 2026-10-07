@@ -47,7 +47,8 @@ export type EventType =
   | 'task'
   | 'announce'
   | 'system'
-  | 'team';
+  | 'team'
+  | 'auth';
 
 export interface EventLog {
   id: string;
