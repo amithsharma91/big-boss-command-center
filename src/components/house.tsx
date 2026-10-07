@@ -18,7 +18,7 @@ export function CommandPanel(props: {
   const [selectedId, setSelectedId] = useState('');
   const [action, setAction] = useState<CommandAction>('add');
   const [value, setValue] = useState(50);
-  const [message, setMessage] = useState('Awaiting order, Big Boss…');
+  const [message, setMessage] = useState('Select contestant + action, then EXECUTE');
 
   const showValue = action === 'add' || action === 'sub';
 
@@ -101,7 +101,7 @@ export function CommandPanel(props: {
   }
 
   return (
-    <Card title="BIG BOSS COMMAND" subtitle="Direct house order" id="command">
+    <Card title="BIG BOSS COMMAND" subtitle="Points • Nominate • Immunity • Captain • Evict" id="command">
       <div className="space-y-2">
         <label className="block">
           <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-zinc-500">
@@ -180,7 +180,7 @@ export function DangerZone(props: {
 
   return (
     <Card
-      title="DANGER ZONE"
+      title={`DANGER ZONE (${nominees.length})`}
       subtitle="Active nominees face eviction"
       id="danger-zone"
       className="border-red-600/40"
@@ -202,8 +202,8 @@ export function DangerZone(props: {
               </div>
               <Badge tone="red">Nominated</Badge>
               <div className="flex items-center gap-1.5">
-                <ActionButton kind="ghost" onClick={() => onRemoveNomination(c.id)} title={`Pardon ${c.name}`}>
-                  PARDON
+                <ActionButton kind="ghost" onClick={() => onRemoveNomination(c.id)} title={`Remove nomination for ${c.name}`}>
+                  REMOVE NOMINATION
                 </ActionButton>
                 <ActionButton kind="danger" onClick={() => handleEvict(c)} title={`Evict ${c.name}`}>
                   EVICT
@@ -235,18 +235,24 @@ export function AnnouncementBar(props: {
 
   return (
     <Card title="BIG BOSS ANNOUNCEMENT" subtitle="Broadcast to the house" id="announcement">
-      <form onSubmit={handleSubmit} className="flex gap-2">
-        <input
-          type="text"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Speak, Big Boss…"
-          aria-label="Announcement text"
-          className="min-w-0 flex-1 rounded-lg border border-white/10 bg-[#0a0a12] px-2 py-1.5 text-xs text-zinc-100 placeholder:text-zinc-600"
-        />
-        <ActionButton kind="primary" type="submit">
-          ANNOUNCE
-        </ActionButton>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+        <label htmlFor="announcement-input" className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+          Message to house
+        </label>
+        <div className="flex gap-2">
+          <input
+            id="announcement-input"
+            type="text"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Speak, Big Boss…"
+            aria-label="Announcement text"
+            className="min-w-0 flex-1 rounded-lg border border-white/10 bg-[#0a0a12] px-2 py-1.5 text-xs text-zinc-100 placeholder:text-zinc-600"
+          />
+          <ActionButton kind="primary" type="submit">
+            ANNOUNCE
+          </ActionButton>
+        </div>
       </form>
       <div className="mt-3">
         <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-zinc-500">
@@ -261,14 +267,19 @@ export function AnnouncementBar(props: {
         )}
       </div>
       {recent.length > 0 ? (
-        <ul className="mt-2 space-y-1.5">
+        <div className="mt-2">
+          <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+            House history
+          </div>
+          <ul className="space-y-1.5">
           {recent.map((a) => (
             <li key={a.id} className="rounded-lg border border-white/10 bg-white/[0.02] px-2 py-1.5">
               <p className="text-xs text-zinc-200">{a.text}</p>
               <p className="mt-0.5 text-[10px] text-zinc-500">{a.createdAt}</p>
             </li>
           ))}
-        </ul>
+          </ul>
+        </div>
       ) : null}
     </Card>
   );

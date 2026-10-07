@@ -42,7 +42,7 @@ export function Card(props: {
   const { title, subtitle, action, children, className = '', id } = props;
   const showHeader = title !== undefined || subtitle !== undefined || action !== undefined;
   return (
-    <section id={id} className={`rounded-xl border border-white/10 bg-[#101018] panel-glow p-4 ${className}`}>
+    <section id={id} className={`rounded-xl border border-white/10 bg-[#101018] p-4 ${className}`}>
       {showHeader ? (
         <div className="mb-3 flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -50,7 +50,7 @@ export function Card(props: {
               <h2 className="uppercase tracking-widest text-sm font-bold text-zinc-100">{title}</h2>
             ) : null}
             {subtitle !== undefined ? (
-              <p className="mt-0.5 text-xs text-zinc-500">{subtitle}</p>
+              <p className="mt-0.5 text-xs text-zinc-400">{subtitle}</p>
             ) : null}
           </div>
           {action !== undefined ? <div className="flex shrink-0 items-center gap-2">{action}</div> : null}
@@ -81,7 +81,7 @@ export function StatTile(props: {
   const { label, value, accent = 'gray', sub } = props;
   return (
     <div className="bg-[#14141c] border border-white/10 rounded-lg p-3">
-      <div className="uppercase text-[10px] tracking-widest text-zinc-500">{label}</div>
+      <div className="uppercase text-[10px] tracking-widest text-zinc-400">{label}</div>
       <div className={`mt-1 font-extrabold text-xl ${statAccents[accent]}`}>{value}</div>
       {sub !== undefined ? <div className="mt-1 text-[11px] text-zinc-500">{sub}</div> : null}
     </div>
@@ -112,7 +112,7 @@ export function ActionButton(props: {
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={`text-xs font-semibold px-2.5 py-1.5 rounded-lg transition disabled:opacity-40 disabled:cursor-not-allowed ${buttonKinds[kind]} ${className}`}
+      className={`min-h-[32px] text-xs font-semibold px-2.5 py-1.5 rounded-lg transition disabled:opacity-40 disabled:cursor-not-allowed ${buttonKinds[kind]} ${className}`}
     >
       {children}
     </button>
@@ -132,7 +132,7 @@ export function Header(props: { onReset: () => void; activeCount: number }) {
     <header className="sticky top-0 z-20 backdrop-blur bg-[#07070c]/90 border-b border-white/10">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="rounded-full bg-red-600 w-9 h-9 grid place-items-center font-black text-sm text-white shadow-[0_0_20px_rgba(220,38,38,0.5)]">
+          <div className="rounded-full bg-red-600 border border-white/10 w-9 h-9 grid place-items-center font-black text-sm text-white">
             BB
           </div>
           <div className="min-w-0">
@@ -144,7 +144,15 @@ export function Header(props: { onReset: () => void; activeCount: number }) {
             </p>
           </div>
         </div>
-        <div className="flex shrink-0 items-center gap-4">
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-x-4 gap-y-2">
+          <nav aria-label="Sections" className="hidden items-center gap-3 text-[11px] font-semibold tracking-wider text-zinc-400 lg:flex">
+            <a className="transition hover:text-zinc-100" href="#leaderboard">LEADERBOARD</a>
+            <a className="transition hover:text-zinc-100" href="#contestants">CONTESTANTS</a>
+            <a className="transition hover:text-zinc-100" href="#tasks">TASKS</a>
+            <a className="transition hover:text-zinc-100" href="#task-timer">TIMER</a>
+            <a className="transition hover:text-zinc-100" href="#danger-zone">DANGER ZONE</a>
+            <a className="transition hover:text-zinc-100" href="#announcement">ANNOUNCE</a>
+          </nav>
           <span className="flex items-center gap-2">
             <span className="live-dot inline-block h-2 w-2 rounded-full bg-red-500" />
             <span className="text-red-400 font-bold text-xs tracking-widest">LIVE</span>

@@ -38,7 +38,7 @@ export function Leaderboard(props: { board: Contestant[] }) {
             return (
               <li
                 key={c.id}
-                className="flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/40 px-3 py-2"
+                className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2"
               >
                 <span
                   className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border font-extrabold tabular-nums ${ring}`}
@@ -47,9 +47,9 @@ export function Leaderboard(props: { board: Contestant[] }) {
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-1.5">
-                    <span className="font-semibold">{c.name}</span>
-                    {c.captain ? <span title="Captain">👑</span> : null}
-                    {c.immune ? <span title="Immune">🛡</span> : null}
+                    <span className="truncate font-semibold">{c.name}</span>
+                    {c.captain ? <Badge tone="amber">Captain</Badge> : null}
+                    {c.immune ? <Badge tone="blue">Immune</Badge> : null}
                     {nominated ? <Badge tone="red">NOMINATED</Badge> : null}
                   </span>
                   <span className="block truncate text-[11px] text-zinc-500">{c.team}</span>
@@ -106,8 +106,13 @@ export function ContestantGrid(props: ContestantGridProps) {
             return (
               <div
                 key={c.id}
-                className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-3"
+                className="rounded-lg border border-white/10 bg-white/[0.02] p-3"
               >
+                {evicted ? (
+                  <p className="mb-2 rounded-md border border-zinc-500/30 bg-zinc-500/10 px-2 py-1 text-[11px] font-bold tracking-wider text-zinc-400">
+                    EVICTED — ALL ACTIONS LOCKED
+                  </p>
+                ) : null}
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="truncate font-semibold">{c.name}</div>
@@ -120,19 +125,16 @@ export function ContestantGrid(props: ContestantGridProps) {
                 </div>
 
                 <div className="mt-2 flex flex-wrap gap-1">
-                  {c.captain ? <Badge tone="amber">👑 CAPTAIN</Badge> : null}
-                  {c.immune ? <Badge tone="blue">🛡 IMMUNE</Badge> : null}
-                  {nominated ? <Badge tone="red">⚠ NOMINATED</Badge> : null}
-                  {evicted ? <Badge tone="gray">EVICTED</Badge> : null}
+                  {c.captain ? <Badge tone="amber">Captain</Badge> : null}
+                  {c.immune ? <Badge tone="blue">Immune</Badge> : null}
+                  {nominated ? <Badge tone="red">Nominated</Badge> : null}
+                  {evicted ? <Badge tone="gray">Evicted</Badge> : null}
                 </div>
 
                 <div className="mt-3">
                   <div className="mb-1 text-[11px] font-semibold tracking-wide text-zinc-500">
                     POINTS
                   </div>
-                  {evicted ? (
-                    <p className="mb-1 text-[11px] text-zinc-500">Evicted — actions locked</p>
-                  ) : null}
                   <div className="flex flex-wrap gap-1">
                     <ActionButton
                       kind="ghost"
@@ -175,7 +177,7 @@ export function ContestantGrid(props: ContestantGridProps) {
                   </div>
                   {evicted ? null : nominated ? (
                     <ActionButton
-                      kind="gold"
+                      kind="ghost"
                       className="px-2 py-1 text-xs"
                       disabled={evicted}
                       onClick={() => onRemoveNomination(c.id)}
@@ -183,14 +185,17 @@ export function ContestantGrid(props: ContestantGridProps) {
                       REMOVE NOMINATION
                     </ActionButton>
                   ) : c.immune ? (
-                    <ActionButton
-                      kind="ghost"
-                      className="px-2 py-1 text-xs"
-                      disabled
-                      title="Immune contestants cannot be nominated"
-                    >
-                      NOMINATE 🔒
-                    </ActionButton>
+                    <div>
+                      <ActionButton
+                        kind="ghost"
+                        className="px-2 py-1 text-xs"
+                        disabled
+                        title="Immune contestants cannot be nominated"
+                      >
+                        NOMINATE — BLOCKED
+                      </ActionButton>
+                      <p className="mt-1 text-[11px] text-zinc-400">Immune — revoke immunity to nominate</p>
+                    </div>
                   ) : (
                     <ActionButton
                       kind="primary"
@@ -198,7 +203,7 @@ export function ContestantGrid(props: ContestantGridProps) {
                       disabled={evicted}
                       onClick={() => onNominate(c.id)}
                     >
-                      ⚠ NOMINATE
+                      NOMINATE
                     </ActionButton>
                   )}
                 </div>
@@ -223,7 +228,7 @@ export function ContestantGrid(props: ContestantGridProps) {
                       disabled={evicted}
                       onClick={() => onGrantImmunity(c.id)}
                     >
-                      GRANT 🛡
+                      GRANT IMMUNITY
                     </ActionButton>
                   )}
                 </div>
@@ -233,7 +238,7 @@ export function ContestantGrid(props: ContestantGridProps) {
                     CAPTAIN
                   </div>
                   {c.captain ? (
-                    <Badge tone="amber">👑 CURRENT CAPTAIN</Badge>
+                    <Badge tone="amber">Current Captain</Badge>
                   ) : (
                     <ActionButton
                       kind="gold"
@@ -248,7 +253,7 @@ export function ContestantGrid(props: ContestantGridProps) {
 
                 <div className="mt-2">
                   <div className="mb-1 text-[11px] font-semibold tracking-wide text-zinc-500">
-                    EVICT
+                    EVICT <span className="font-normal text-zinc-600">(requires confirmation)</span>
                   </div>
                   <ActionButton
                     kind="danger"
@@ -271,8 +276,8 @@ export function ContestantGrid(props: ContestantGridProps) {
   );
 }
 
-export function HouseStats(props: { stats: HouseStats }) {
-  const { stats } = props;
+export function HouseStats(props: { stats: HouseStats; captainName: string }) {
+  const { stats, captainName } = props;
   const top = stats.highestScorer;
   const topName = top ? top.name : '—';
   const topPoints = top ? top.points : null;
@@ -280,8 +285,9 @@ export function HouseStats(props: { stats: HouseStats }) {
   return (
     <section id="house-stats">
       <h2 className="mb-2 text-xs font-bold tracking-widest text-zinc-500">TOP STATISTICS</h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-2">
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-2">
         <StatTile label="ACTIVE CONTESTANTS" value={stats.active} accent="green" />
+        <StatTile label="CAPTAIN" value={captainName} accent="amber" />
         <StatTile
           label="HIGHEST SCORER"
           value={topName}

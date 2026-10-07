@@ -36,6 +36,44 @@ interface PersistedState {
   events: EventLog[];
 }
 
+function isContestant(c: unknown): c is Contestant {
+  if (typeof c !== 'object' || c === null) return false;
+  const o = c as Record<string, unknown>;
+  return (
+    typeof o.id === 'string' &&
+    typeof o.name === 'string' &&
+    typeof o.team === 'string' &&
+    typeof o.points === 'number' &&
+    Number.isFinite(o.points) &&
+    (o.status === 'ACTIVE' || o.status === 'NOMINATED' || o.status === 'EVICTED') &&
+    typeof o.immune === 'boolean' &&
+    typeof o.captain === 'boolean'
+  );
+}
+
+function isTask(t: unknown): t is Task {
+  if (typeof t !== 'object' || t === null) return false;
+  const o = t as Record<string, unknown>;
+  return (
+    typeof o.id === 'string' &&
+    typeof o.title === 'string' &&
+    (typeof o.assignedTo === 'string' || o.assignedTo === null) &&
+    typeof o.completed === 'boolean'
+  );
+}
+
+function isAnnouncement(a: unknown): a is Announcement {
+  if (typeof a !== 'object' || a === null) return false;
+  const o = a as Record<string, unknown>;
+  return typeof o.id === 'string' && typeof o.text === 'string' && typeof o.createdAt === 'string';
+}
+
+function isEvent(e: unknown): e is EventLog {
+  if (typeof e !== 'object' || e === null) return false;
+  const o = e as Record<string, unknown>;
+  return typeof o.id === 'string' && typeof o.message === 'string' && typeof o.timestamp === 'string';
+}
+
 function loadInitial(): PersistedState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -43,9 +81,14 @@ function loadInitial(): PersistedState {
       const parsed = JSON.parse(raw) as Partial<PersistedState>;
       if (
         Array.isArray(parsed.contestants) &&
+        parsed.contestants.length > 0 &&
+        parsed.contestants.every(isContestant) &&
         Array.isArray(parsed.tasks) &&
+        parsed.tasks.every(isTask) &&
         Array.isArray(parsed.announcements) &&
-        Array.isArray(parsed.events)
+        parsed.announcements.every(isAnnouncement) &&
+        Array.isArray(parsed.events) &&
+        parsed.events.every(isEvent)
       ) {
         return {
           contestants: parsed.contestants,
@@ -87,7 +130,7 @@ export function useHouse() {
   const addPoints = (id: string, amount: number): void => {
     if (!Number.isFinite(amount) || amount <= 0) return;
     const target = contestants.find((c) => c.id === id);
-    if (!target) return;
+    if (!target || target.status === 'EVICTED') return;
     setContestants((prev) =>
       prev.map((c) => (c.id === id ? { ...c, points: Math.max(0, c.points + amount) } : c)),
     );
@@ -97,7 +140,7 @@ export function useHouse() {
   const subtractPoints = (id: string, amount: number): void => {
     if (!Number.isFinite(amount) || amount <= 0) return;
     const target = contestants.find((c) => c.id === id);
-    if (!target) return;
+    if (!target || target.status === 'EVICTED') return;
     setContestants((prev) =>
       prev.map((c) => (c.id === id ? { ...c, points: Math.max(0, c.points - amount) } : c)),
     );
@@ -126,7 +169,7 @@ export function useHouse() {
 
   const revokeImmunity = (id: string): void => {
     const target = contestants.find((c) => c.id === id);
-    if (!target) return;
+    if (!target || target.status === 'EVICTED') return;
     setContestants((prev) => prev.map((c) => (c.id === id ? { ...c, immune: false } : c)));
     setEvents((prev) => pushTo(prev, 'immunity', `${target.name} immunity revoked`));
   };
@@ -154,6 +197,9 @@ export function useHouse() {
         c.id === id ? { ...c, status: 'EVICTED', captain: false, immune: false } : c,
       ),
     );
+    setTasks((prev) =>
+      prev.map((t) => (t.assignedTo === id ? { ...t, assignedTo: null } : t)),
+    );
     setEvents((prev) => pushTo(prev, 'evict', `${target.name} EVICTED from the house`));
   };
 
@@ -162,7 +208,7 @@ export function useHouse() {
     if (!task) return;
     if (contestantId !== null) {
       const assignee = contestants.find((c) => c.id === contestantId);
-      if (!assignee) return;
+      if (!assignee || assignee.status === 'EVICTED') return;
       setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, assignedTo: contestantId } : t)));
       setEvents((prev) => pushTo(prev, 'task', `Task "${task.title}" assigned to ${assignee.name}`));
     } else {

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useHouse } from './store';
 import { Header } from './components/ui';
 import { Leaderboard, ContestantGrid, HouseStats } from './components/contestants';
@@ -6,9 +7,12 @@ import { CommandPanel, DangerZone, AnnouncementBar, EventFeed } from './componen
 
 export default function App() {
   const house = useHouse();
-  const nominees = house.contestants.filter(
-    (c) => c.status === 'NOMINATED',
+  const nominees = useMemo(
+    () => house.contestants.filter((c) => c.status === 'NOMINATED'),
+    [house.contestants],
   );
+  const captainName =
+    house.contestants.find((c) => c.captain && c.status !== 'EVICTED')?.name ?? '—';
 
   return (
     <div className="min-h-screen bg-[#07070c] text-zinc-100">
@@ -16,7 +20,7 @@ export default function App() {
 
       <main className="mx-auto max-w-[1440px] space-y-4 p-3 md:p-5">
         <section aria-label="Top statistics">
-          <HouseStats stats={house.stats} />
+          <HouseStats stats={house.stats} captainName={captainName} />
         </section>
 
         <section
@@ -46,6 +50,15 @@ export default function App() {
           </div>
         </section>
 
+        <section aria-label="Tasks and announcements" className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+          <div className="lg:col-span-3">
+            <TaskManager tasks={house.tasks} contestants={house.contestants} onAssign={house.assignTask} onToggle={house.toggleTask} />
+          </div>
+          <div className="lg:col-span-2">
+            <AnnouncementBar announcements={house.announcements} onAnnounce={house.makeAnnouncement} />
+          </div>
+        </section>
+
         <section aria-label="Contestant management">
           <ContestantGrid
             contestants={house.contestants}
@@ -58,26 +71,6 @@ export default function App() {
             onChangeCaptain={house.changeCaptain}
             onEvict={house.evict}
           />
-        </section>
-
-        <section
-          aria-label="Tasks and announcements"
-          className="grid grid-cols-1 gap-4 lg:grid-cols-5"
-        >
-          <div className="lg:col-span-3">
-            <TaskManager
-              tasks={house.tasks}
-              contestants={house.contestants}
-              onAssign={house.assignTask}
-              onToggle={house.toggleTask}
-            />
-          </div>
-          <div className="lg:col-span-2">
-            <AnnouncementBar
-              announcements={house.announcements}
-              onAnnounce={house.makeAnnouncement}
-            />
-          </div>
         </section>
 
         <footer className="pb-4 pt-2 text-center text-[11px] tracking-widest text-zinc-600">

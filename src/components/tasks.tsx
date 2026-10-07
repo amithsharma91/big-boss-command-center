@@ -36,14 +36,14 @@ export function TaskManager(props: {
           return (
             <div
               key={task.id}
-              className="flex items-center gap-2 rounded border border-white/10 bg-white/[0.02] px-2 py-1.5"
+              className="flex flex-wrap items-center gap-2 rounded border border-white/10 bg-white/[0.02] px-2 py-1.5"
             >
               <span className="shrink-0 text-sm">{task.completed ? '✅' : '⬜'}</span>
               <span
                 className={
                   task.completed
-                    ? 'flex-1 text-sm font-semibold text-white/40 line-through'
-                    : 'flex-1 text-sm font-semibold text-white'
+                    ? 'min-w-0 flex-1 truncate text-sm font-semibold text-white/40 line-through'
+                    : 'min-w-0 flex-1 truncate text-sm font-semibold text-white'
                 }
               >
                 {task.title}
@@ -53,19 +53,22 @@ export function TaskManager(props: {
               ) : (
                 <Badge tone="gray">UNASSIGNED</Badge>
               )}
-              <select
-                className="bg-[#0a0a12] border-white/10 rounded text-xs px-1 py-1"
-                value={task.assignedTo ?? ''}
-                onChange={(e) => onAssign(task.id, e.target.value || null)}
-                aria-label={`Assign ${task.title}`}
-              >
-                <option value="">Unassigned</option>
-                {active.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+              <label className="flex items-center gap-1 text-[11px] text-zinc-500">
+                Assign:
+                <select
+                  className="bg-[#0a0a12] border-white/10 rounded text-xs px-1 py-1"
+                  value={task.assignedTo ?? ''}
+                  onChange={(e) => onAssign(task.id, e.target.value || null)}
+                  aria-label={`Assign ${task.title}`}
+                >
+                  <option value="">Assign…</option>
+                  {active.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <ActionButton
                 kind={task.completed ? 'ghost' : 'primary'}
                 onClick={() => onToggle(task.id)}
@@ -80,7 +83,7 @@ export function TaskManager(props: {
         <span className="text-[11px] text-white/50">
           COMPLETED: {completed} / {tasks.length}
         </span>
-        <div className="h-1.5 flex-1 bg-white/10 rounded overflow-hidden">
+        <div className="h-1.5 flex-1 bg-white/10 rounded overflow-hidden" role="progressbar" aria-valuenow={completed} aria-valuemin={0} aria-valuemax={tasks.length} aria-label="Tasks completed">
           <div className="h-full bg-green-500 rounded" style={{ width: `${pct}%` }} />
         </div>
       </div>
@@ -103,6 +106,16 @@ export function TaskTimer() {
     };
   }, []);
 
+  useEffect(() => {
+    if (running && remaining <= 0) {
+      if (intervalRef.current !== null) {
+        window.clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      setRunning(false);
+    }
+  }, [running, remaining]);
+
   const start = () => {
     if (running) return;
     const base = remaining <= 0 ? totalSecs : remaining;
@@ -112,17 +125,7 @@ export function TaskTimer() {
       window.clearInterval(intervalRef.current);
     }
     intervalRef.current = window.setInterval(() => {
-      setRemaining((prev) => {
-        if (prev <= 1) {
-          if (intervalRef.current !== null) {
-            window.clearInterval(intervalRef.current);
-            intervalRef.current = null;
-          }
-          setRunning(false);
-          return 0;
-        }
-        return prev - 1;
-      });
+      setRemaining((prev) => (prev <= 1 ? 0 : prev - 1));
     }, 1000);
   };
 
@@ -155,7 +158,7 @@ export function TaskTimer() {
   const progress = totalSecs > 0 ? (remaining / totalSecs) * 100 : 0;
 
   return (
-    <Card title="TASK TIMER" subtitle="Default 15:00" id="task-timer">
+    <Card title="TASK TIMER" subtitle="Countdown • START / PAUSE / RESET" id="task-timer">
       <div className="flex flex-col items-center gap-3">
         <div
           className={
@@ -167,9 +170,9 @@ export function TaskTimer() {
           {format(remaining)}
         </div>
         {remaining === 0 && <Badge tone="red">⏱ TIME UP</Badge>}
-        <div className="h-1.5 w-full bg-white/10 rounded overflow-hidden">
+        <div className="h-1.5 w-full bg-white/10 rounded overflow-hidden" role="progressbar" aria-valuenow={remaining} aria-valuemin={0} aria-valuemax={totalSecs} aria-label="Time remaining">
           <div
-            className="h-full rounded bg-gradient-to-r from-red-600 to-red-400"
+            className="h-full rounded bg-red-500"
             style={{ width: `${progress}%` }}
           />
         </div>
