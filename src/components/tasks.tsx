@@ -29,21 +29,21 @@ export function TaskManager(props: {
     <Card title="TASK MANAGEMENT" subtitle="Assign • Track • Complete" id="tasks">
       <div className="space-y-2">
         {tasks.length === 0 && (
-          <p className="text-xs text-white/40">No tasks yet.</p>
+          <p className="text-xs text-[#A1A1AA]">No tasks yet.</p>
         )}
         {tasks.map((task) => {
           const name = contestantName(task.assignedTo);
           return (
             <div
               key={task.id}
-              className="flex flex-wrap items-center gap-2 rounded border border-white/10 bg-white/[0.02] px-2 py-1.5"
+              className="flex flex-wrap items-center gap-2 rounded border border-[#E4E4E7] bg-[#FCFCFB] px-2 py-1.5"
             >
               <span className="shrink-0 text-sm">{task.completed ? '✅' : '⬜'}</span>
               <span
                 className={
                   task.completed
-                    ? 'min-w-0 flex-1 truncate text-sm font-semibold text-white/40 line-through'
-                    : 'min-w-0 flex-1 truncate text-sm font-semibold text-white'
+                    ? 'min-w-0 flex-1 truncate text-sm font-semibold text-[#A1A1AA] line-through'
+                    : 'min-w-0 flex-1 truncate text-sm font-semibold text-[#18181B]'
                 }
               >
                 {task.title}
@@ -53,10 +53,10 @@ export function TaskManager(props: {
               ) : (
                 <Badge tone="gray">UNASSIGNED</Badge>
               )}
-              <label className="flex items-center gap-1 text-[11px] text-zinc-500">
+              <label className="flex items-center gap-1 text-[11px] text-[#71717A]">
                 Assign:
                 <select
-                  className="bg-[#0a0a12] border-white/10 rounded text-xs px-1 py-1"
+                  className="bg-white border border-[#E4E4E7] text-[#18181B] rounded text-xs px-1 py-1"
                   value={task.assignedTo ?? ''}
                   onChange={(e) => onAssign(task.id, e.target.value || null)}
                   aria-label={`Assign ${task.title}`}
@@ -80,10 +80,10 @@ export function TaskManager(props: {
         })}
       </div>
       <div className="mt-3 flex items-center gap-2">
-        <span className="text-[11px] text-white/50">
+        <span className="text-[11px] text-[#71717A]">
           COMPLETED: {completed} / {tasks.length}
         </span>
-        <div className="h-1.5 flex-1 bg-white/10 rounded overflow-hidden" role="progressbar" aria-valuenow={completed} aria-valuemin={0} aria-valuemax={tasks.length} aria-label="Tasks completed">
+        <div className="h-1.5 flex-1 bg-[#E4E4E7] rounded overflow-hidden" role="progressbar" aria-valuenow={completed} aria-valuemin={0} aria-valuemax={tasks.length} aria-label="Tasks completed">
           <div className="h-full bg-green-500 rounded" style={{ width: `${pct}%` }} />
         </div>
       </div>
@@ -163,21 +163,21 @@ export function TaskTimer() {
         <div
           className={
             danger
-              ? 'font-black text-4xl tabular-nums text-red-500 animate-pulse'
-              : 'font-black text-4xl tabular-nums text-white'
+              ? 'font-black text-4xl tabular-nums text-[#DC2626] animate-pulse'
+              : 'font-black text-4xl tabular-nums text-[#18181B]'
           }
         >
           {format(remaining)}
         </div>
         {remaining === 0 && <Badge tone="red">⏱ TIME UP</Badge>}
-        <div className="h-1.5 w-full bg-white/10 rounded overflow-hidden" role="progressbar" aria-valuenow={remaining} aria-valuemin={0} aria-valuemax={totalSecs} aria-label="Time remaining">
+        <div className="h-1.5 w-full bg-[#E4E4E7] rounded overflow-hidden" role="progressbar" aria-valuenow={remaining} aria-valuemin={0} aria-valuemax={totalSecs} aria-label="Time remaining">
           <div
             className="h-full rounded bg-red-500"
             style={{ width: `${progress}%` }}
           />
         </div>
         <div className="flex items-center gap-2">
-          <label className="text-[11px] text-white/50" htmlFor="task-timer-mins">
+          <label className="text-[11px] text-[#71717A]" htmlFor="task-timer-mins">
             Mins
           </label>
           <input
@@ -188,10 +188,10 @@ export function TaskTimer() {
             value={Math.round(totalSecs / 60)}
             disabled={running}
             onChange={(e) => handleMinutes(Number(e.target.value))}
-            className="w-16 bg-[#0a0a12] border border-white/10 rounded text-xs px-1 py-1 disabled:opacity-50"
+            className="w-16 bg-white border border-[#E4E4E7] text-[#18181B] rounded text-xs px-1 py-1 disabled:opacity-50"
           />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-center gap-2">
           <ActionButton kind="primary" onClick={start} disabled={running}>
             START
           </ActionButton>

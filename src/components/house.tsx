@@ -104,14 +104,14 @@ export function CommandPanel(props: {
     <Card title="BIG BOSS COMMAND" subtitle="Points • Nominate • Immunity • Captain • Evict" id="command">
       <div className="space-y-2">
         <label className="block">
-          <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+          <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-[#71717A]">
             Contestant
           </span>
           <select
             value={selectedId}
             onChange={(e) => setSelectedId(e.target.value)}
             aria-label="Contestant"
-            className="w-full rounded-lg border border-white/10 bg-[#0a0a12] px-2 py-1.5 text-xs text-zinc-100"
+            className="w-full rounded-lg border border-[#E4E4E7] bg-white px-2 py-1.5 text-xs text-[#18181B]"
           >
             <option value="">Select contestant…</option>
             {active.map((c) => (
@@ -122,14 +122,14 @@ export function CommandPanel(props: {
           </select>
         </label>
         <label className="block">
-          <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+          <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-[#71717A]">
             Action
           </span>
           <select
             value={action}
             onChange={(e) => setAction(e.target.value as CommandAction)}
             aria-label="Action"
-            className="w-full rounded-lg border border-white/10 bg-[#0a0a12] px-2 py-1.5 text-xs text-zinc-100"
+            className="w-full rounded-lg border border-[#E4E4E7] bg-white px-2 py-1.5 text-xs text-[#18181B]"
           >
             <option value="add">+ Points</option>
             <option value="sub">− Points</option>
@@ -141,7 +141,7 @@ export function CommandPanel(props: {
         </label>
         {showValue ? (
           <label className="block">
-            <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+            <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-[#71717A]">
               Value
             </span>
             <input
@@ -150,14 +150,14 @@ export function CommandPanel(props: {
               value={value}
               onChange={(e) => setValue(Number(e.target.value))}
               aria-label="Value"
-              className="w-full rounded-lg border border-white/10 bg-[#0a0a12] px-2 py-1.5 text-xs text-zinc-100"
+              className="w-full rounded-lg border border-[#E4E4E7] bg-white px-2 py-1.5 text-xs text-[#18181B]"
             />
           </label>
         ) : null}
         <ActionButton kind="primary" onClick={handleExecute} className="w-full py-2.5 text-sm font-bold tracking-widest">
           EXECUTE
         </ActionButton>
-        <p aria-live="polite" className="min-h-4 text-xs text-zinc-400">
+        <p aria-live="polite" className="min-h-4 text-xs text-[#71717A]">
           {message}
         </p>
       </div>
@@ -183,25 +183,25 @@ export function DangerZone(props: {
       title={`DANGER ZONE (${nominees.length})`}
       subtitle="Active nominees face eviction"
       id="danger-zone"
-      className="border-red-600/40"
+      className="border-[#FECACA]"
     >
       {nominees.length === 0 ? (
-        <p className="text-xs text-zinc-500">No nominees. The house is safe… for now.</p>
+        <p className="text-xs text-[#71717A]">No nominees. The house is safe… for now.</p>
       ) : (
         <div className="space-y-2">
           {nominees.map((c) => (
             <div
               key={c.id}
-              className="flex flex-wrap items-center gap-2 rounded-lg border border-red-600/20 bg-red-950/20 px-2 py-1.5"
+              className="flex flex-wrap items-center gap-2 rounded-lg border border-[#FECACA] bg-[#FEF2F2] px-2 py-1.5"
             >
               <div className="min-w-0 flex-1">
-                <div className="truncate text-xs font-bold text-zinc-100">{c.name}</div>
-                <div className="text-[11px] text-zinc-500">
+                <div className="truncate text-xs font-bold text-[#18181B]">{c.name}</div>
+                <div className="text-[11px] text-[#71717A]">
                   {c.team} • {c.points} pts
                 </div>
               </div>
               <Badge tone="red">Nominated</Badge>
-              <div className="flex items-center gap-1.5">
+              <div className="flex flex-wrap items-center gap-1.5">
                 <ActionButton kind="ghost" onClick={() => onRemoveNomination(c.id)} title={`Remove nomination for ${c.name}`}>
                   REMOVE NOMINATION
                 </ActionButton>
@@ -236,7 +236,7 @@ export function AnnouncementBar(props: {
   return (
     <Card title="BIG BOSS ANNOUNCEMENT" subtitle="Broadcast to the house" id="announcement">
       <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-        <label htmlFor="announcement-input" className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+        <label htmlFor="announcement-input" className="text-[10px] font-bold uppercase tracking-widest text-[#71717A]">
           Message to house
         </label>
         <div className="flex gap-2">
@@ -247,7 +247,7 @@ export function AnnouncementBar(props: {
             onChange={(e) => setText(e.target.value)}
             placeholder="Speak, Big Boss…"
             aria-label="Announcement text"
-            className="min-w-0 flex-1 rounded-lg border border-white/10 bg-[#0a0a12] px-2 py-1.5 text-xs text-zinc-100 placeholder:text-zinc-600"
+            className="min-w-0 flex-1 rounded-lg border border-[#E4E4E7] bg-white px-2 py-1.5 text-xs text-[#18181B] placeholder:text-[#A1A1AA]"
           />
           <ActionButton kind="primary" type="submit">
             ANNOUNCE
@@ -255,27 +255,27 @@ export function AnnouncementBar(props: {
         </div>
       </form>
       <div className="mt-3">
-        <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+        <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-[#71717A]">
           Latest ({announcements.length})
         </div>
         {latest ? (
-          <p className="border-l-4 border-amber-400 bg-amber-400/10 px-3 py-2 text-sm font-semibold text-amber-100">
+          <p className="border-l-4 border-[#D92D20] bg-[#FCFCFB] px-3 py-2 text-sm font-semibold text-[#18181B]">
             {latest.text}
           </p>
         ) : (
-          <p className="text-xs text-zinc-500">No announcements yet.</p>
+          <p className="text-xs text-[#71717A]">No announcements yet.</p>
         )}
       </div>
       {recent.length > 0 ? (
         <div className="mt-2">
-          <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+          <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-[#71717A]">
             House history
           </div>
           <ul className="space-y-1.5">
           {recent.map((a) => (
-            <li key={a.id} className="rounded-lg border border-white/10 bg-white/[0.02] px-2 py-1.5">
-              <p className="text-xs text-zinc-200">{a.text}</p>
-              <p className="mt-0.5 text-[10px] text-zinc-500">{a.createdAt}</p>
+            <li key={a.id} className="rounded-lg border border-[#E4E4E7] bg-[#FCFCFB] px-2 py-1.5">
+              <p className="text-xs text-[#3F3F46]">{a.text}</p>
+              <p className="mt-0.5 text-[10px] text-[#A1A1AA]">{a.createdAt}</p>
             </li>
           ))}
           </ul>
@@ -285,15 +285,15 @@ export function AnnouncementBar(props: {
   );
 }
 
-const eventEmoji: Record<EventLog['type'], string> = {
-  points: '⚡',
-  captain: '👑',
-  nominate: '⚠',
-  immunity: '🛡',
-  evict: '🚪',
-  task: '✅',
-  announce: '📢',
-  system: '🏠',
+const eventDot: Record<EventLog['type'], string> = {
+  points: 'bg-[#D92D20]',
+  captain: 'bg-[#B08D22]',
+  nominate: 'bg-[#B45309]',
+  immunity: 'bg-[#52525B]',
+  evict: 'bg-[#DC2626]',
+  task: 'bg-[#15803D]',
+  announce: 'bg-[#D92D20]',
+  system: 'bg-[#A1A1AA]',
 };
 
 export function EventFeed(props: { events: EventLog[] }) {
@@ -301,20 +301,18 @@ export function EventFeed(props: { events: EventLog[] }) {
   return (
     <Card title="EVENT FEED" subtitle="Live house activity" id="events">
       {events.length === 0 ? (
-        <p className="text-xs text-zinc-500">No activity yet.</p>
+        <p className="text-xs text-[#71717A]">No activity yet.</p>
       ) : (
         <div className="slim-scroll max-h-72 space-y-1.5 overflow-y-auto pr-1">
           {events.map((e) => (
             <div
               key={e.id}
-              className="feed-item flex items-start gap-2 rounded border border-white/5 bg-white/[0.02] px-2 py-1"
+              className="feed-item flex items-start gap-2 rounded border border-[#E4E4E7] bg-[#FCFCFB] px-2 py-1"
             >
-              <span aria-hidden="true" className="text-xs leading-4">
-                {eventEmoji[e.type] ?? '🏠'}
-              </span>
+              <span aria-hidden="true" className={`rounded-full h-2 w-2 mt-1.5 shrink-0 ${eventDot[e.type] ?? 'bg-[#A1A1AA]'}`} />
               <div className="min-w-0 flex-1">
-                <div className="mono font-mono text-[10px] text-zinc-500">{e.timestamp}</div>
-                <div className="text-xs text-zinc-300">{e.message}</div>
+                <div className="mono font-mono text-[10px] text-[#A1A1AA]">{e.timestamp}</div>
+                <div className="text-xs text-[#3F3F46]">{e.message}</div>
               </div>
             </div>
           ))}

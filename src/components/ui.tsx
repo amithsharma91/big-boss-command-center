@@ -7,28 +7,28 @@ type StatAccent = 'red' | 'amber' | 'green' | 'blue' | 'gray';
 type ButtonKind = 'primary' | 'danger' | 'ghost' | 'gold' | 'green';
 
 const badgeTones: Record<BadgeTone, string> = {
-  red: 'bg-red-600/20 text-red-400 border-red-600/40',
-  amber: 'bg-amber-400/15 text-amber-300 border-amber-400/40',
-  green: 'bg-green-500/15 text-green-400 border-green-500/40',
-  gray: 'bg-zinc-500/15 text-zinc-400 border-zinc-500/40',
-  blue: 'bg-blue-500/15 text-blue-300 border-blue-500/40',
-  purple: 'bg-purple-500/15 text-purple-300 border-purple-500/40',
+  red: 'bg-[#FEE2E2] text-[#DC2626] border-[#FECACA]',
+  amber: 'bg-[#F7F0D0] text-[#B08D22] border-[#EADFAE]',
+  green: 'bg-[#DCFCE7] text-[#15803D] border-[#BBF7D0]',
+  gray: 'bg-[#F4F4F5] text-[#71717A] border-[#E4E4E7]',
+  blue: 'bg-[#F4F4F5] text-[#52525B] border-[#E4E4E7]',
+  purple: 'bg-[#F4F4F5] text-[#71717A] border-[#E4E4E7]',
 };
 
 const statAccents: Record<StatAccent, string> = {
-  red: 'text-red-400',
-  amber: 'text-amber-300',
-  green: 'text-green-400',
-  blue: 'text-blue-300',
-  gray: 'text-zinc-100',
+  red: 'text-[#DC2626]',
+  amber: 'text-[#B08D22]',
+  green: 'text-[#15803D]',
+  blue: 'text-[#52525B]',
+  gray: 'text-[#18181B]',
 };
 
 const buttonKinds: Record<ButtonKind, string> = {
-  primary: 'bg-red-600 hover:bg-red-500 text-white border border-transparent',
-  danger: 'bg-red-950 border border-red-700 text-red-300 hover:bg-red-900',
-  ghost: 'bg-white/5 border border-white/10 text-zinc-200 hover:bg-white/10',
-  gold: 'bg-amber-400 text-black hover:bg-amber-300 border border-transparent font-bold',
-  green: 'bg-green-600 hover:bg-green-500 text-white border border-transparent',
+  primary: 'bg-[#D92D20] hover:bg-[#B42318] text-white border border-transparent',
+  danger: 'bg-white border border-[#FECACA] text-[#DC2626] hover:bg-[#FEF2F2]',
+  ghost: 'bg-white border border-[#E4E4E7] text-[#52525B] hover:bg-[#F7F7F5]',
+  gold: 'bg-[#B08D22] hover:bg-[#97791D] text-white border border-transparent',
+  green: 'bg-[#15803D] hover:bg-[#166534] text-white border border-transparent',
 };
 
 export function Card(props: {
@@ -42,15 +42,15 @@ export function Card(props: {
   const { title, subtitle, action, children, className = '', id } = props;
   const showHeader = title !== undefined || subtitle !== undefined || action !== undefined;
   return (
-    <section id={id} className={`rounded-xl border border-white/10 bg-[#101018] p-4 ${className}`}>
+    <section id={id} className={`rounded-xl border border-[#E4E4E7] bg-white p-4 shadow-sm ${className}`}>
       {showHeader ? (
         <div className="mb-3 flex items-start justify-between gap-3">
           <div className="min-w-0">
             {title !== undefined ? (
-              <h2 className="uppercase tracking-widest text-sm font-bold text-zinc-100">{title}</h2>
+              <h2 className="uppercase tracking-widest text-sm font-bold text-[#71717A]">{title}</h2>
             ) : null}
             {subtitle !== undefined ? (
-              <p className="mt-0.5 text-xs text-zinc-400">{subtitle}</p>
+              <p className="mt-0.5 text-xs text-[#71717A]">{subtitle}</p>
             ) : null}
           </div>
           {action !== undefined ? <div className="flex shrink-0 items-center gap-2">{action}</div> : null}
@@ -80,10 +80,10 @@ export function StatTile(props: {
 }) {
   const { label, value, accent = 'gray', sub } = props;
   return (
-    <div className="bg-[#14141c] border border-white/10 rounded-lg p-3">
-      <div className="uppercase text-[10px] tracking-widest text-zinc-400">{label}</div>
-      <div className={`mt-1 font-extrabold text-xl ${statAccents[accent]}`}>{value}</div>
-      {sub !== undefined ? <div className="mt-1 text-[11px] text-zinc-500">{sub}</div> : null}
+    <div className="bg-white border border-[#E4E4E7] rounded-lg p-3 min-w-0">
+      <div className="uppercase text-[10px] tracking-widest text-[#71717A]">{label}</div>
+      <div className={`mt-1 font-extrabold text-xl truncate ${statAccents[accent]}`}>{value}</div>
+      {sub !== undefined ? <div className="mt-1 text-[11px] text-[#71717A]">{sub}</div> : null}
     </div>
   );
 }
@@ -112,7 +112,7 @@ export function ActionButton(props: {
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={`min-h-[32px] text-xs font-semibold px-2.5 py-1.5 rounded-lg transition disabled:opacity-40 disabled:cursor-not-allowed ${buttonKinds[kind]} ${className}`}
+      className={`min-h-[32px] text-xs font-semibold px-2.5 py-1.5 rounded-lg transition disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D92D20] focus-visible:ring-offset-2 ${buttonKinds[kind]} ${className}`}
     >
       {children}
     </button>
@@ -129,36 +129,36 @@ export function Header(props: { onReset: () => void; activeCount: number }) {
   }
 
   return (
-    <header className="sticky top-0 z-20 backdrop-blur bg-[#07070c]/90 border-b border-white/10">
+    <header className="sticky top-0 z-20 backdrop-blur bg-white/90 border-b border-[#E4E4E7]">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="rounded-full bg-red-600 border border-white/10 w-9 h-9 grid place-items-center font-black text-sm text-white">
+          <div className="rounded-full bg-[#D92D20] w-9 h-9 grid place-items-center font-black text-sm text-white">
             BB
           </div>
           <div className="min-w-0">
-            <h1 className="font-black tracking-widest text-lg text-white leading-tight truncate">
+            <h1 className="font-black tracking-widest text-lg text-[#18181B] leading-tight truncate">
               BIG BOSS COMMAND CENTER
             </h1>
-            <p className="text-[11px] text-zinc-500 tracking-widest">
+            <p className="text-[11px] text-[#71717A] tracking-widest">
               ROUND 01 • BUILD &amp; SYSTEMS CHALLENGE
             </p>
           </div>
         </div>
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-x-4 gap-y-2">
-          <nav aria-label="Sections" className="hidden items-center gap-3 text-[11px] font-semibold tracking-wider text-zinc-400 lg:flex">
-            <a className="transition hover:text-zinc-100" href="#leaderboard">LEADERBOARD</a>
-            <a className="transition hover:text-zinc-100" href="#contestants">CONTESTANTS</a>
-            <a className="transition hover:text-zinc-100" href="#tasks">TASKS</a>
-            <a className="transition hover:text-zinc-100" href="#task-timer">TIMER</a>
-            <a className="transition hover:text-zinc-100" href="#danger-zone">DANGER ZONE</a>
-            <a className="transition hover:text-zinc-100" href="#announcement">ANNOUNCE</a>
+          <nav aria-label="Sections" className="hidden items-center gap-3 text-[11px] font-semibold tracking-wider text-[#71717A] lg:flex">
+            <a className="transition hover:text-[#18181B]" href="#leaderboard">LEADERBOARD</a>
+            <a className="transition hover:text-[#18181B]" href="#contestants">CONTESTANTS</a>
+            <a className="transition hover:text-[#18181B]" href="#tasks">TASKS</a>
+            <a className="transition hover:text-[#18181B]" href="#task-timer">TIMER</a>
+            <a className="transition hover:text-[#18181B]" href="#danger-zone">DANGER ZONE</a>
+            <a className="transition hover:text-[#18181B]" href="#announcement">ANNOUNCE</a>
           </nav>
           <span className="flex items-center gap-2">
-            <span className="live-dot inline-block h-2 w-2 rounded-full bg-red-500" />
-            <span className="text-red-400 font-bold text-xs tracking-widest">LIVE</span>
+            <span className="live-dot inline-block h-2 w-2 rounded-full bg-[#D92D20]" />
+            <span className="text-[#D92D20] font-bold text-xs tracking-widest">LIVE</span>
           </span>
-          <span className="text-xs text-zinc-400">
-            <span className="font-bold text-zinc-100">{activeCount}</span> active
+          <span className="text-xs text-[#71717A]">
+            <span className="font-bold text-[#18181B]">{activeCount}</span> active
           </span>
           <ActionButton kind="ghost" onClick={handleReset} title="Reset all house state">
             RESET HOUSE

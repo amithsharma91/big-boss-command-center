@@ -3,9 +3,9 @@
 @tailwind utilities;
 
 body {
-  background-color: #07070c;
-  color: #f4f4f5;
-  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  background-color: #F7F7F5;
+  color: #18181B;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 /* slim scrollbars for panels */
@@ -17,19 +17,19 @@ body {
   background: transparent;
 }
 .slim-scroll::-webkit-scrollbar-thumb {
-  background: #3f3f46;
+  background: #D4D4D8;
   border-radius: 3px;
 }
 
 @keyframes live-ping {
   0% {
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    box-shadow: 0 0 0 0 rgba(217, 45, 32, 0.45);
   }
   70% {
-    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+    box-shadow: 0 0 0 8px rgba(217, 45, 32, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    box-shadow: 0 0 0 0 rgba(217, 45, 32, 0);
   }
 }
 .live-dot {
@@ -51,12 +51,13 @@ body {
 }
 
 .panel-glow {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 1px 0 rgba(24, 24, 27, 0.04);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .live-dot,
-  .feed-item {
+  .feed-item,
+  .animate-pulse {
     animation: none;
   }
 }

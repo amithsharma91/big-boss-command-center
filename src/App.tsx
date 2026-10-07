@@ -15,7 +15,7 @@ export default function App() {
     house.contestants.find((c) => c.captain && c.status !== 'EVICTED')?.name ?? '—';
 
   return (
-    <div className="min-h-screen bg-[#07070c] text-zinc-100">
+    <div className="min-h-screen bg-[#F7F7F5] text-[#18181B]">
       <Header onReset={house.resetAll} activeCount={house.stats.active} />
 
       <main className="mx-auto max-w-[1440px] space-y-4 p-3 md:p-5">
@@ -23,12 +23,11 @@ export default function App() {
           <HouseStats stats={house.stats} captainName={captainName} />
         </section>
 
-        <section
-          aria-label="Command row"
-          className="grid grid-cols-1 gap-4 lg:grid-cols-3"
-        >
-          <Leaderboard board={house.leaderboard} />
-          <div className="flex flex-col gap-4">
+        <section aria-label="Leaderboard and command" className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+          <div className="lg:col-span-3">
+            <Leaderboard board={house.leaderboard} />
+          </div>
+          <div className="lg:col-span-2">
             <CommandPanel
               contestants={house.contestants}
               onAdd={house.addPoints}
@@ -38,42 +37,51 @@ export default function App() {
               onChangeCaptain={house.changeCaptain}
               onEvict={house.evict}
             />
+          </div>
+        </section>
+
+        <section aria-label="Contestants and timer" className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+          <div className="lg:col-span-3">
+            <ContestantGrid
+              contestants={house.contestants}
+              onAdd={house.addPoints}
+              onSub={house.subtractPoints}
+              onNominate={house.nominate}
+              onRemoveNomination={house.removeNomination}
+              onGrantImmunity={house.grantImmunity}
+              onRevokeImmunity={house.revokeImmunity}
+              onChangeCaptain={house.changeCaptain}
+              onEvict={house.evict}
+            />
+          </div>
+          <div className="lg:col-span-2">
             <TaskTimer />
           </div>
-          <div className="flex flex-col gap-4">
+        </section>
+
+        <section aria-label="Tasks and danger zone" className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+          <div className="lg:col-span-3">
+            <TaskManager tasks={house.tasks} contestants={house.contestants} onAssign={house.assignTask} onToggle={house.toggleTask} />
+          </div>
+          <div className="lg:col-span-2">
             <DangerZone
               nominees={nominees}
               onEvict={house.evict}
               onRemoveNomination={house.removeNomination}
             />
+          </div>
+        </section>
+
+        <section aria-label="Announcements and activity" className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+          <div className="lg:col-span-3">
+            <AnnouncementBar announcements={house.announcements} onAnnounce={house.makeAnnouncement} />
+          </div>
+          <div className="lg:col-span-2">
             <EventFeed events={house.events} />
           </div>
         </section>
 
-        <section aria-label="Tasks and announcements" className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-          <div className="lg:col-span-3">
-            <TaskManager tasks={house.tasks} contestants={house.contestants} onAssign={house.assignTask} onToggle={house.toggleTask} />
-          </div>
-          <div className="lg:col-span-2">
-            <AnnouncementBar announcements={house.announcements} onAnnounce={house.makeAnnouncement} />
-          </div>
-        </section>
-
-        <section aria-label="Contestant management">
-          <ContestantGrid
-            contestants={house.contestants}
-            onAdd={house.addPoints}
-            onSub={house.subtractPoints}
-            onNominate={house.nominate}
-            onRemoveNomination={house.removeNomination}
-            onGrantImmunity={house.grantImmunity}
-            onRevokeImmunity={house.revokeImmunity}
-            onChangeCaptain={house.changeCaptain}
-            onEvict={house.evict}
-          />
-        </section>
-
-        <footer className="pb-4 pt-2 text-center text-[11px] tracking-widest text-zinc-600">
+        <footer className="pb-4 pt-2 text-center text-[11px] tracking-widest text-[#A1A1AA]">
           BIG BOSS COMMAND CENTER • ROUND 01 • STATE PERSISTED LOCALLY
         </footer>
       </main>
