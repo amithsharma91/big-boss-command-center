@@ -1,4 +1,6 @@
-import type { Contestant, HouseStats } from '../types';
+import type { Contestant, HouseStats, Team } from '../types';
+import type { ReactNode } from 'react';
+import { teamName, teamColor } from '../types';
 import { Card, Badge, ActionButton, StatTile } from './ui';
 
 function isEvicted(c: Contestant): boolean {
@@ -17,18 +19,18 @@ function nominateDisabledReason(c: Contestant): string | null {
 }
 
 function rankRing(rank: number): string {
-  if (rank === 1) return 'border-[#B08D22] bg-[#F7F0D0]';
-  if (rank === 2) return 'border-[#D4D4D8]';
-  if (rank === 3) return 'border-[#B45309]';
-  return 'border-[#E4E4E7]';
+  if (rank === 1) return 'border-[#D4AF37] bg-[#D4AF37]/15';
+  if (rank === 2) return 'border-[#A1A1AA]';
+  if (rank === 3) return 'border-[#F59E0B]';
+  return 'border-[#27272A]';
 }
 
-export function Leaderboard(props: { board: Contestant[] }) {
-  const { board } = props;
+export function Leaderboard(props: { board: Contestant[]; teams: Team[] }) {
+  const { board, teams } = props;
   return (
     <Card title="LEADERBOARD" subtitle="Live ranking • active contestants" id="leaderboard">
       {!board || board.length === 0 ? (
-        <p className="text-sm text-[#71717A]">No contestants on the leaderboard yet.</p>
+        <p className="text-sm text-[#A1A1AA]">No contestants on the leaderboard yet.</p>
       ) : (
         <ol className="flex flex-col gap-2">
           {board.map((c, i) => {
@@ -38,23 +40,30 @@ export function Leaderboard(props: { board: Contestant[] }) {
             return (
               <li
                 key={c.id}
-                className="flex items-center gap-3 rounded-lg border border-[#E4E4E7] bg-[#FCFCFB] px-3 py-2"
+                className="flex items-center gap-3 rounded-lg border border-[#27272A] bg-[#111113] px-3 py-2"
               >
                 <span
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border font-extrabold tabular-nums text-[#18181B] ${ring}`}
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border font-extrabold tabular-nums text-[#FAFAFA] ${ring}`}
                 >
                   {rank}
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-1.5">
-                    <span className="truncate font-semibold text-[#18181B]">{c.name}</span>
+                    <span className="truncate font-semibold text-[#FAFAFA]">{c.name}</span>
                     {c.captain ? <Badge tone="amber">Captain</Badge> : null}
                     {c.immune ? <Badge tone="blue">Immune</Badge> : null}
                     {nominated ? <Badge tone="red">NOMINATED</Badge> : null}
                   </span>
-                  <span className="block truncate text-[11px] text-[#71717A]">{c.team}</span>
+                  <span className="block truncate text-[11px] text-[#A1A1AA]">
+                    <span
+                      aria-hidden="true"
+                      className="mr-1 inline-block h-1.5 w-1.5 rounded-full align-middle"
+                      style={{ backgroundColor: teamColor(teams, c.teamId) }}
+                    />
+                    {teamName(teams, c.teamId)}
+                  </span>
                 </span>
-                <span className="font-extrabold tabular-nums text-[#18181B]">{c.points}</span>
+                <span className="font-extrabold tabular-nums text-[#FAFAFA]">{c.points}</span>
               </li>
             );
           })}
@@ -66,6 +75,8 @@ export function Leaderboard(props: { board: Contestant[] }) {
 
 type ContestantGridProps = {
   contestants: Contestant[];
+  teams: Team[];
+  filter?: ReactNode;
   onAdd(id: string, n: number): void;
   onSub(id: string, n: number): void;
   onNominate(id: string): void;
@@ -79,6 +90,8 @@ type ContestantGridProps = {
 export function ContestantGrid(props: ContestantGridProps) {
   const {
     contestants,
+    teams,
+    filter,
     onAdd,
     onSub,
     onNominate,
@@ -94,9 +107,10 @@ export function ContestantGrid(props: ContestantGridProps) {
       title="CONTESTANTS"
       subtitle="Points • Captain • Nominate • Immunity • Eviction"
       id="contestants"
+      action={filter}
     >
       {contestants.length === 0 ? (
-        <p className="text-sm text-[#71717A]">No contestants yet.</p>
+        <p className="text-sm text-[#A1A1AA]">No contestants yet.</p>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {contestants.map((c) => {
@@ -106,21 +120,28 @@ export function ContestantGrid(props: ContestantGridProps) {
             return (
               <div
                 key={c.id}
-                className="rounded-lg border border-[#E4E4E7] bg-[#FCFCFB] p-3"
+                className="rounded-lg border border-[#27272A] bg-[#111113] p-3"
               >
                 {evicted ? (
-                  <p className="mb-2 rounded-md border border-[#E4E4E7] bg-[#F4F4F5] px-2 py-1 text-[11px] font-bold tracking-wider text-[#71717A]">
+                  <p className="mb-2 rounded-md border border-[#27272A] bg-white/5 px-2 py-1 text-[11px] font-bold tracking-wider text-[#A1A1AA]">
                     EVICTED — ALL ACTIONS LOCKED
                   </p>
                 ) : null}
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <div className="truncate font-semibold text-[#18181B]">{c.name}</div>
-                    <div className="truncate text-[11px] text-[#71717A]">{c.team}</div>
+                    <div className="truncate font-semibold text-[#FAFAFA]">{c.name}</div>
+                    <div className="truncate text-[11px] font-bold tracking-wider text-[#A1A1AA]">
+                      <span
+                        aria-hidden="true"
+                        className="mr-1 inline-block h-1.5 w-1.5 rounded-full align-middle"
+                        style={{ backgroundColor: teamColor(teams, c.teamId) }}
+                      />
+                      {teamName(teams, c.teamId).toUpperCase()}
+                    </div>
                   </div>
                   <div className="shrink-0 text-right">
-                    <div className="text-2xl font-extrabold tabular-nums text-[#18181B]">{c.points}</div>
-                    <div className="text-[11px] text-[#71717A]">POINTS</div>
+                    <div className="text-2xl font-extrabold tabular-nums text-[#FAFAFA]">{c.points}</div>
+                    <div className="text-[11px] text-[#A1A1AA]">POINTS</div>
                   </div>
                 </div>
 
@@ -132,7 +153,7 @@ export function ContestantGrid(props: ContestantGridProps) {
                 </div>
 
                 <div className="mt-3">
-                  <div className="mb-1 text-[11px] font-semibold tracking-wide text-[#71717A]">
+                  <div className="mb-1 text-[11px] font-semibold tracking-wide text-[#A1A1AA]">
                     POINTS
                   </div>
                   <div className="flex flex-wrap gap-1">
@@ -172,7 +193,7 @@ export function ContestantGrid(props: ContestantGridProps) {
                 </div>
 
                 <div className="mt-2">
-                  <div className="mb-1 text-[11px] font-semibold tracking-wide text-[#71717A]">
+                  <div className="mb-1 text-[11px] font-semibold tracking-wide text-[#A1A1AA]">
                     NOMINATE
                   </div>
                   {evicted ? null : nominated ? (
@@ -194,7 +215,7 @@ export function ContestantGrid(props: ContestantGridProps) {
                       >
                         NOMINATE — BLOCKED
                       </ActionButton>
-                      <p className="mt-1 text-[11px] text-[#71717A]">Immune — revoke immunity to nominate</p>
+                      <p className="mt-1 text-[11px] text-[#A1A1AA]">Immune — revoke immunity to nominate</p>
                     </div>
                   ) : (
                     <ActionButton
@@ -209,7 +230,7 @@ export function ContestantGrid(props: ContestantGridProps) {
                 </div>
 
                 <div className="mt-2">
-                  <div className="mb-1 text-[11px] font-semibold tracking-wide text-[#71717A]">
+                  <div className="mb-1 text-[11px] font-semibold tracking-wide text-[#A1A1AA]">
                     IMMUNITY
                   </div>
                   {c.immune ? (
@@ -234,7 +255,7 @@ export function ContestantGrid(props: ContestantGridProps) {
                 </div>
 
                 <div className="mt-2">
-                  <div className="mb-1 text-[11px] font-semibold tracking-wide text-[#71717A]">
+                  <div className="mb-1 text-[11px] font-semibold tracking-wide text-[#A1A1AA]">
                     CAPTAIN
                   </div>
                   {c.captain ? (
@@ -252,7 +273,7 @@ export function ContestantGrid(props: ContestantGridProps) {
                 </div>
 
                 <div className="mt-2">
-                  <div className="mb-1 text-[11px] font-semibold tracking-wide text-[#71717A]">
+                  <div className="mb-1 text-[11px] font-semibold tracking-wide text-[#A1A1AA]">
                     EVICT <span className="font-normal text-[#A1A1AA]">(requires confirmation)</span>
                   </div>
                   <ActionButton
@@ -284,7 +305,7 @@ export function HouseStats(props: { stats: HouseStats; captainName: string }) {
 
   return (
     <section id="house-stats">
-      <h2 className="mb-2 text-xs font-bold tracking-widest text-[#71717A]">TOP STATISTICS</h2>
+      <h2 className="mb-2 text-xs font-bold tracking-widest text-[#A1A1AA]">TOP STATISTICS</h2>
       <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-2">
         <StatTile label="ACTIVE CONTESTANTS" value={stats.active} accent="green" />
         <StatTile label="CAPTAIN" value={captainName} accent="amber" />

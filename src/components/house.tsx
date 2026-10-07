@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import type { Announcement, Contestant, EventLog } from '../types';
+import type { Announcement, Contestant, EventLog, Team } from '../types';
+import { teamName } from '../types';
 import { ActionButton, Badge, Card } from './ui';
 
 type CommandAction = 'add' | 'sub' | 'nominate' | 'immunity' | 'captain' | 'evict';
 
 export function CommandPanel(props: {
   contestants: Contestant[];
+  teams: Team[];
   onAdd(id: string, n: number): void;
   onSub(id: string, n: number): void;
   onNominate(id: string): void;
@@ -13,7 +15,7 @@ export function CommandPanel(props: {
   onChangeCaptain(id: string): void;
   onEvict(id: string): void;
 }) {
-  const { contestants, onAdd, onSub, onNominate, onGrantImmunity, onChangeCaptain, onEvict } = props;
+  const { contestants, teams, onAdd, onSub, onNominate, onGrantImmunity, onChangeCaptain, onEvict } = props;
   const active = contestants.filter((c) => c.status !== 'EVICTED');
   const [selectedId, setSelectedId] = useState('');
   const [action, setAction] = useState<CommandAction>('add');
@@ -104,32 +106,32 @@ export function CommandPanel(props: {
     <Card title="BIG BOSS COMMAND" subtitle="Points • Nominate • Immunity • Captain • Evict" id="command">
       <div className="space-y-2">
         <label className="block">
-          <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-[#71717A]">
+          <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-[#A1A1AA]">
             Contestant
           </span>
           <select
             value={selectedId}
             onChange={(e) => setSelectedId(e.target.value)}
             aria-label="Contestant"
-            className="w-full rounded-lg border border-[#E4E4E7] bg-white px-2 py-1.5 text-xs text-[#18181B]"
+            className="w-full rounded-lg border border-[#27272A] bg-[#111113] px-2 py-1.5 text-xs text-[#FAFAFA]"
           >
             <option value="">Select contestant…</option>
             {active.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.name} • {c.team} • {c.points} pts
+                {c.name} • {teamName(teams, c.teamId)} • {c.points} pts
               </option>
             ))}
           </select>
         </label>
         <label className="block">
-          <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-[#71717A]">
+          <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-[#A1A1AA]">
             Action
           </span>
           <select
             value={action}
             onChange={(e) => setAction(e.target.value as CommandAction)}
             aria-label="Action"
-            className="w-full rounded-lg border border-[#E4E4E7] bg-white px-2 py-1.5 text-xs text-[#18181B]"
+            className="w-full rounded-lg border border-[#27272A] bg-[#111113] px-2 py-1.5 text-xs text-[#FAFAFA]"
           >
             <option value="add">+ Points</option>
             <option value="sub">− Points</option>
@@ -141,7 +143,7 @@ export function CommandPanel(props: {
         </label>
         {showValue ? (
           <label className="block">
-            <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-[#71717A]">
+            <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-[#A1A1AA]">
               Value
             </span>
             <input
@@ -150,14 +152,14 @@ export function CommandPanel(props: {
               value={value}
               onChange={(e) => setValue(Number(e.target.value))}
               aria-label="Value"
-              className="w-full rounded-lg border border-[#E4E4E7] bg-white px-2 py-1.5 text-xs text-[#18181B]"
+              className="w-full rounded-lg border border-[#27272A] bg-[#111113] px-2 py-1.5 text-xs text-[#FAFAFA]"
             />
           </label>
         ) : null}
         <ActionButton kind="primary" onClick={handleExecute} className="w-full py-2.5 text-sm font-bold tracking-widest">
           EXECUTE
         </ActionButton>
-        <p aria-live="polite" className="min-h-4 text-xs text-[#71717A]">
+        <p aria-live="polite" className="min-h-4 text-xs text-[#A1A1AA]">
           {message}
         </p>
       </div>
@@ -167,10 +169,11 @@ export function CommandPanel(props: {
 
 export function DangerZone(props: {
   nominees: Contestant[];
+  teams: Team[];
   onEvict(id: string): void;
   onRemoveNomination(id: string): void;
 }) {
-  const { nominees, onEvict, onRemoveNomination } = props;
+  const { nominees, teams, onEvict, onRemoveNomination } = props;
 
   function handleEvict(c: Contestant): void {
     if (window.confirm(`Evict ${c.name} from the house?`)) {
@@ -183,21 +186,21 @@ export function DangerZone(props: {
       title={`DANGER ZONE (${nominees.length})`}
       subtitle="Active nominees face eviction"
       id="danger-zone"
-      className="border-[#FECACA]"
+      className="border-[#E11D48]/40"
     >
       {nominees.length === 0 ? (
-        <p className="text-xs text-[#71717A]">No nominees. The house is safe… for now.</p>
+        <p className="text-xs text-[#A1A1AA]">No nominees. The house is safe… for now.</p>
       ) : (
         <div className="space-y-2">
           {nominees.map((c) => (
             <div
               key={c.id}
-              className="flex flex-wrap items-center gap-2 rounded-lg border border-[#FECACA] bg-[#FEF2F2] px-2 py-1.5"
+              className="flex flex-wrap items-center gap-2 rounded-lg border border-[#E11D48]/40 bg-[#E11D48]/10 px-2 py-1.5"
             >
               <div className="min-w-0 flex-1">
-                <div className="truncate text-xs font-bold text-[#18181B]">{c.name}</div>
-                <div className="text-[11px] text-[#71717A]">
-                  {c.team} • {c.points} pts
+                <div className="truncate text-xs font-bold text-[#FAFAFA]">{c.name}</div>
+                <div className="text-[11px] text-[#A1A1AA]">
+                  {teamName(teams, c.teamId)} • {c.points} pts
                 </div>
               </div>
               <Badge tone="red">Nominated</Badge>
@@ -236,7 +239,7 @@ export function AnnouncementBar(props: {
   return (
     <Card title="BIG BOSS ANNOUNCEMENT" subtitle="Broadcast to the house" id="announcement">
       <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-        <label htmlFor="announcement-input" className="text-[10px] font-bold uppercase tracking-widest text-[#71717A]">
+        <label htmlFor="announcement-input" className="text-[10px] font-bold uppercase tracking-widest text-[#A1A1AA]">
           Message to house
         </label>
         <div className="flex gap-2">
@@ -247,7 +250,7 @@ export function AnnouncementBar(props: {
             onChange={(e) => setText(e.target.value)}
             placeholder="Speak, Big Boss…"
             aria-label="Announcement text"
-            className="min-w-0 flex-1 rounded-lg border border-[#E4E4E7] bg-white px-2 py-1.5 text-xs text-[#18181B] placeholder:text-[#A1A1AA]"
+            className="min-w-0 flex-1 rounded-lg border border-[#27272A] bg-[#111113] px-2 py-1.5 text-xs text-[#FAFAFA] placeholder:text-[#A1A1AA]"
           />
           <ActionButton kind="primary" type="submit">
             ANNOUNCE
@@ -255,26 +258,26 @@ export function AnnouncementBar(props: {
         </div>
       </form>
       <div className="mt-3">
-        <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-[#71717A]">
+        <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-[#A1A1AA]">
           Latest ({announcements.length})
         </div>
         {latest ? (
-          <p className="border-l-4 border-[#D92D20] bg-[#FCFCFB] px-3 py-2 text-sm font-semibold text-[#18181B]">
+          <p className="border-l-4 border-[#E11D48] bg-[#111113] px-3 py-2 text-sm font-semibold text-[#FAFAFA]">
             {latest.text}
           </p>
         ) : (
-          <p className="text-xs text-[#71717A]">No announcements yet.</p>
+          <p className="text-xs text-[#A1A1AA]">No announcements yet.</p>
         )}
       </div>
       {recent.length > 0 ? (
         <div className="mt-2">
-          <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-[#71717A]">
+          <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-[#A1A1AA]">
             House history
           </div>
           <ul className="space-y-1.5">
           {recent.map((a) => (
-            <li key={a.id} className="rounded-lg border border-[#E4E4E7] bg-[#FCFCFB] px-2 py-1.5">
-              <p className="text-xs text-[#3F3F46]">{a.text}</p>
+            <li key={a.id} className="rounded-lg border border-[#27272A] bg-[#111113] px-2 py-1.5">
+              <p className="text-xs text-[#E4E4E7]">{a.text}</p>
               <p className="mt-0.5 text-[10px] text-[#A1A1AA]">{a.createdAt}</p>
             </li>
           ))}
@@ -286,14 +289,15 @@ export function AnnouncementBar(props: {
 }
 
 const eventDot: Record<EventLog['type'], string> = {
-  points: 'bg-[#D92D20]',
+  points: 'bg-[#E11D48]',
   captain: 'bg-[#B08D22]',
   nominate: 'bg-[#B45309]',
   immunity: 'bg-[#52525B]',
   evict: 'bg-[#DC2626]',
   task: 'bg-[#15803D]',
-  announce: 'bg-[#D92D20]',
+  announce: 'bg-[#E11D48]',
   system: 'bg-[#A1A1AA]',
+  team: 'bg-[#8B5CF6]',
 };
 
 export function EventFeed(props: { events: EventLog[] }) {
@@ -301,18 +305,18 @@ export function EventFeed(props: { events: EventLog[] }) {
   return (
     <Card title="EVENT FEED" subtitle="Live house activity" id="events">
       {events.length === 0 ? (
-        <p className="text-xs text-[#71717A]">No activity yet.</p>
+        <p className="text-xs text-[#A1A1AA]">No activity yet.</p>
       ) : (
         <div className="slim-scroll max-h-72 space-y-1.5 overflow-y-auto pr-1">
           {events.map((e) => (
             <div
               key={e.id}
-              className="feed-item flex items-start gap-2 rounded border border-[#E4E4E7] bg-[#FCFCFB] px-2 py-1"
+              className="feed-item flex items-start gap-2 rounded border border-[#27272A] bg-[#111113] px-2 py-1"
             >
               <span aria-hidden="true" className={`rounded-full h-2 w-2 mt-1.5 shrink-0 ${eventDot[e.type] ?? 'bg-[#A1A1AA]'}`} />
               <div className="min-w-0 flex-1">
                 <div className="mono font-mono text-[10px] text-[#A1A1AA]">{e.timestamp}</div>
-                <div className="text-xs text-[#3F3F46]">{e.message}</div>
+                <div className="text-xs text-[#E4E4E7]">{e.message}</div>
               </div>
             </div>
           ))}
