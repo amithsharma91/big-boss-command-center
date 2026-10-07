@@ -1,0 +1,314 @@
+import { useState } from 'react';
+import type { Announcement, Contestant, EventLog } from '../types';
+import { ActionButton, Badge, Card } from './ui';
+
+type CommandAction = 'add' | 'sub' | 'nominate' | 'immunity' | 'captain' | 'evict';
+
+export function CommandPanel(props: {
+  contestants: Contestant[];
+  onAdd(id: string, n: number): void;
+  onSub(id: string, n: number): void;
+  onNominate(id: string): void;
+  onGrantImmunity(id: string): void;
+  onChangeCaptain(id: string): void;
+  onEvict(id: string): void;
+}) {
+  const { contestants, onAdd, onSub, onNominate, onGrantImmunity, onChangeCaptain, onEvict } = props;
+  const active = contestants.filter((c) => c.status !== 'EVICTED');
+  const [selectedId, setSelectedId] = useState('');
+  const [action, setAction] = useState<CommandAction>('add');
+  const [value, setValue] = useState(50);
+  const [message, setMessage] = useState('Awaiting order, Big Boss…');
+
+  const showValue = action === 'add' || action === 'sub';
+
+  function handleExecute(): void {
+    if (!selectedId) {
+      setMessage('Select a contestant');
+      return;
+    }
+    const target = contestants.find((c) => c.id === selectedId);
+    if (!target) {
+      setMessage('Select a contestant');
+      return;
+    }
+    if (target.status === 'EVICTED') {
+      setMessage(`${target.name} is evicted — action blocked`);
+      return;
+    }
+    switch (action) {
+      case 'add': {
+        const n = Math.floor(Number(value));
+        if (!Number.isFinite(n) || n <= 0) {
+          setMessage('Enter a valid point value');
+          return;
+        }
+        onAdd(target.id, n);
+        setMessage(`Executed: +${n} → ${target.name}`);
+        return;
+      }
+      case 'sub': {
+        const n = Math.floor(Number(value));
+        if (!Number.isFinite(n) || n <= 0) {
+          setMessage('Enter a valid point value');
+          return;
+        }
+        onSub(target.id, n);
+        setMessage(`Executed: -${n} → ${target.name}`);
+        return;
+      }
+      case 'nominate': {
+        if (target.immune) {
+          setMessage(`${target.name} is immune — nomination blocked`);
+          return;
+        }
+        if (target.status === 'NOMINATED') {
+          setMessage(`${target.name} is already nominated`);
+          return;
+        }
+        onNominate(target.id);
+        setMessage(`Executed: ${target.name} nominated`);
+        return;
+      }
+      case 'immunity': {
+        if (target.immune) {
+          setMessage(`${target.name} already has immunity`);
+          return;
+        }
+        onGrantImmunity(target.id);
+        setMessage(`Executed: ${target.name} granted immunity`);
+        return;
+      }
+      case 'captain': {
+        if (target.captain) {
+          setMessage(`${target.name} is already Captain`);
+          return;
+        }
+        onChangeCaptain(target.id);
+        setMessage(`Executed: ${target.name} is now Captain`);
+        return;
+      }
+      case 'evict': {
+        if (!window.confirm(`Evict ${target.name} from the house?`)) {
+          setMessage(`Eviction cancelled for ${target.name}`);
+          return;
+        }
+        onEvict(target.id);
+        setMessage(`Executed: ${target.name} evicted`);
+        return;
+      }
+    }
+  }
+
+  return (
+    <Card title="BIG BOSS COMMAND" subtitle="Direct house order" id="command">
+      <div className="space-y-2">
+        <label className="block">
+          <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+            Contestant
+          </span>
+          <select
+            value={selectedId}
+            onChange={(e) => setSelectedId(e.target.value)}
+            aria-label="Contestant"
+            className="w-full rounded-lg border border-white/10 bg-[#0a0a12] px-2 py-1.5 text-xs text-zinc-100"
+          >
+            <option value="">Select contestant…</option>
+            {active.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name} • {c.team} • {c.points} pts
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+            Action
+          </span>
+          <select
+            value={action}
+            onChange={(e) => setAction(e.target.value as CommandAction)}
+            aria-label="Action"
+            className="w-full rounded-lg border border-white/10 bg-[#0a0a12] px-2 py-1.5 text-xs text-zinc-100"
+          >
+            <option value="add">+ Points</option>
+            <option value="sub">− Points</option>
+            <option value="nominate">Nominate</option>
+            <option value="immunity">Grant immunity</option>
+            <option value="captain">Make Captain</option>
+            <option value="evict">Evict</option>
+          </select>
+        </label>
+        {showValue ? (
+          <label className="block">
+            <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+              Value
+            </span>
+            <input
+              type="number"
+              min={1}
+              value={value}
+              onChange={(e) => setValue(Number(e.target.value))}
+              aria-label="Value"
+              className="w-full rounded-lg border border-white/10 bg-[#0a0a12] px-2 py-1.5 text-xs text-zinc-100"
+            />
+          </label>
+        ) : null}
+        <ActionButton kind="primary" onClick={handleExecute} className="w-full py-2.5 text-sm font-bold tracking-widest">
+          EXECUTE
+        </ActionButton>
+        <p aria-live="polite" className="min-h-4 text-xs text-zinc-400">
+          {message}
+        </p>
+      </div>
+    </Card>
+  );
+}
+
+export function DangerZone(props: {
+  nominees: Contestant[];
+  onEvict(id: string): void;
+  onRemoveNomination(id: string): void;
+}) {
+  const { nominees, onEvict, onRemoveNomination } = props;
+
+  function handleEvict(c: Contestant): void {
+    if (window.confirm(`Evict ${c.name} from the house?`)) {
+      onEvict(c.id);
+    }
+  }
+
+  return (
+    <Card
+      title="DANGER ZONE"
+      subtitle="Active nominees face eviction"
+      id="danger-zone"
+      className="border-red-600/40"
+    >
+      {nominees.length === 0 ? (
+        <p className="text-xs text-zinc-500">No nominees. The house is safe… for now.</p>
+      ) : (
+        <div className="space-y-2">
+          {nominees.map((c) => (
+            <div
+              key={c.id}
+              className="flex flex-wrap items-center gap-2 rounded-lg border border-red-600/20 bg-red-950/20 px-2 py-1.5"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-xs font-bold text-zinc-100">{c.name}</div>
+                <div className="text-[11px] text-zinc-500">
+                  {c.team} • {c.points} pts
+                </div>
+              </div>
+              <Badge tone="red">Nominated</Badge>
+              <div className="flex items-center gap-1.5">
+                <ActionButton kind="ghost" onClick={() => onRemoveNomination(c.id)} title={`Pardon ${c.name}`}>
+                  PARDON
+                </ActionButton>
+                <ActionButton kind="danger" onClick={() => handleEvict(c)} title={`Evict ${c.name}`}>
+                  EVICT
+                </ActionButton>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+export function AnnouncementBar(props: {
+  announcements: Announcement[];
+  onAnnounce(text: string): void;
+}) {
+  const { announcements, onAnnounce } = props;
+  const [text, setText] = useState('');
+  const latest = announcements.length > 0 ? announcements[0] : null;
+  const recent = announcements.slice(0, 3);
+
+  function handleSubmit(e: React.FormEvent): void {
+    e.preventDefault();
+    if (!text.trim()) return;
+    onAnnounce(text);
+    setText('');
+  }
+
+  return (
+    <Card title="BIG BOSS ANNOUNCEMENT" subtitle="Broadcast to the house" id="announcement">
+      <form onSubmit={handleSubmit} className="flex gap-2">
+        <input
+          type="text"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Speak, Big Boss…"
+          aria-label="Announcement text"
+          className="min-w-0 flex-1 rounded-lg border border-white/10 bg-[#0a0a12] px-2 py-1.5 text-xs text-zinc-100 placeholder:text-zinc-600"
+        />
+        <ActionButton kind="primary" type="submit">
+          ANNOUNCE
+        </ActionButton>
+      </form>
+      <div className="mt-3">
+        <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+          Latest ({announcements.length})
+        </div>
+        {latest ? (
+          <p className="border-l-4 border-amber-400 bg-amber-400/10 px-3 py-2 text-sm font-semibold text-amber-100">
+            {latest.text}
+          </p>
+        ) : (
+          <p className="text-xs text-zinc-500">No announcements yet.</p>
+        )}
+      </div>
+      {recent.length > 0 ? (
+        <ul className="mt-2 space-y-1.5">
+          {recent.map((a) => (
+            <li key={a.id} className="rounded-lg border border-white/10 bg-white/[0.02] px-2 py-1.5">
+              <p className="text-xs text-zinc-200">{a.text}</p>
+              <p className="mt-0.5 text-[10px] text-zinc-500">{a.createdAt}</p>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </Card>
+  );
+}
+
+const eventEmoji: Record<EventLog['type'], string> = {
+  points: '⚡',
+  captain: '👑',
+  nominate: '⚠',
+  immunity: '🛡',
+  evict: '🚪',
+  task: '✅',
+  announce: '📢',
+  system: '🏠',
+};
+
+export function EventFeed(props: { events: EventLog[] }) {
+  const { events } = props;
+  return (
+    <Card title="EVENT FEED" subtitle="Live house activity" id="events">
+      {events.length === 0 ? (
+        <p className="text-xs text-zinc-500">No activity yet.</p>
+      ) : (
+        <div className="slim-scroll max-h-72 space-y-1.5 overflow-y-auto pr-1">
+          {events.map((e) => (
+            <div
+              key={e.id}
+              className="feed-item flex items-start gap-2 rounded border border-white/5 bg-white/[0.02] px-2 py-1"
+            >
+              <span aria-hidden="true" className="text-xs leading-4">
+                {eventEmoji[e.type] ?? '🏠'}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="mono font-mono text-[10px] text-zinc-500">{e.timestamp}</div>
+                <div className="text-xs text-zinc-300">{e.message}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
